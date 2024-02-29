@@ -1,0 +1,6 @@
+apiVersion: 1
+
+datasources:
+  - name: grafana-testdata-datasource
+    type: testdata
+    uid: a0ce46a5-c7f8-4cec-997c-6314adf138a1
