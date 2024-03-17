@@ -1,13 +1,14 @@
 import React from 'react';
-import { PanelProps, PanelData, DataFrame } from '@grafana/data';
+import { PanelProps, PanelData } from '@grafana/data';
 import { SimpleOptions } from 'types';
 import { css, cx } from '@emotion/css';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import * as cubism from 'cubism-es';
 import * as d3 from 'd3';
-import _ from 'lodash';
 
 import { config } from '@grafana/runtime';
+import { convertDataToCubism } from '../cubism_utils';
+
 if (config.theme2.isDark) {
   require('../sass/cubism_dark.scss');
 } else {
@@ -67,91 +68,6 @@ const getStyles = (showText: boolean): (() => Styles) => {
   };
 };
 
-function convertDataToCubism(series: DataFrame, seriesIndex: number, timestamps: number[], context: any) {
-  return context.metric(function (start: number, stop: number, step: number, callback: any) {
-    let dataPoints: number[] = series.fields[1].values;
-    let dataPointsTS: number[] = series.fields[0].values;
-    let values: number[] = [];
-    if (timestamps.length === dataPoints.length) {
-      values = dataPoints.map(function (point: number) {
-        return point;
-      });
-    } else if (timestamps.length > dataPoints.length) {
-      let pointIndex = 0;
-      values = _.chain(timestamps)
-        .map(function (ts: number, tsIndex: number) {
-          let point = dataPoints[pointIndex];
-          let nextPoint = null;
-          let nextPointTS = null;
-          if (pointIndex + 1 < dataPoints.length) {
-            nextPoint = dataPoints[pointIndex + 1];
-            nextPointTS = dataPointsTS[pointIndex + 1];
-          }
-          if (nextPointTS == null || ts < nextPointTS) {
-            return point;
-          } else {
-            pointIndex++;
-            return nextPoint!;
-          }
-        })
-        .value();
-    } else {
-      let override = { summaryType: 'avg' };
-      let dataAndTS = dataPointsTS.map((item, index) => [item, dataPoints[index]]);
-      values = _.chain(timestamps)
-        .map(function (ts: number, tsIndex: number) {
-          let nextTs: null | number = null;
-          if (tsIndex + 1 < timestamps.length) {
-            nextTs = timestamps[tsIndex + 1];
-          }
-          let values = dataAndTS
-            .filter(function (point) {
-              return point[0] >= ts && (nextTs == null || point[1] < nextTs);
-            })
-            .map(function (point) {
-              return point[1];
-            });
-          if (override.summaryType === 'sum') {
-            return sumValues(values);
-          } else if (override.summaryType === 'min') {
-            return minValue(values);
-          } else if (override.summaryType === 'max') {
-            return maxValue(values);
-          } else {
-            return averageValues(values);
-          }
-        })
-        .value();
-    }
-    callback(null, values);
-  }, series.fields[1].name);
-}
-
-function sumValues(values: number[]) {
-  return values.reduce(function (a, b) {
-    return a + b;
-  }, 0);
-}
-
-function averageValues(values: number[]) {
-  let sum = values.reduce(function (a, b) {
-    return a + b;
-  }, 0);
-  return sum / values.length;
-}
-
-function maxValue(values: number[]) {
-  return values.reduce(function (a, b) {
-    return Math.max(a, b);
-  }, 0);
-}
-
-function minValue(values: number[]) {
-  return values.reduce(function (a, b) {
-    return Math.min(a, b);
-  }, 0);
-}
-
 export const D3Graph: React.FC<{
   height: number;
   width: number;
@@ -195,14 +111,15 @@ export const D3Graph: React.FC<{
 
       // size seems to be more the nubmer of pix
       // steps seems to be how often things things change in microseconds ?
-      // it also control the range (ie. given the number of pixel and that a pixel reprensent 1e3 milliseconds, the range is 1e3 * size seconds)
+      // it also control the range (ie. given the number of pixel and that a
+      // pixel reprensent 1e3 milliseconds, the range is 1e3 * size seconds)
       context.size(size).step(step);
 
       const innnerDiv = d3.create('div');
       const axisDiv = d3.create('div');
       innnerDiv.node()!.className = stylesGetter.d3inner;
 
-      // create axis: try to find the
+      // create axis: try to find divs with .axis class
       axisDiv
         .selectAll('.axis')
         .data(['bottom'])
@@ -268,6 +185,7 @@ export const D3Graph: React.FC<{
 
       div.append(innnerDiv.node()!);
       div.append(axisDiv.node()!);
+
       if (options.text !== undefined && options.text !== null && options.text !== '') {
         log_debug('showing text');
         let msg = `${options.text}`;
