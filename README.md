@@ -33,3 +33,7 @@ grafana cli \
    ```bash
    docker-compose up -d
    ```
+
+## Helping me
+
+PR and issues are welcome, you can also [buy me some coffee](https://www.buymeacoffee.com/matthieup) it's always a good idea to keep caffinated.
