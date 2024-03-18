@@ -45,6 +45,7 @@ const getStyles = (showText: boolean): (() => Styles) => {
     }
     return {
       wrapper: css`
+        height: 100%;
         font-family: Open Sans;
         position: relative;
         overflow: hidden;
@@ -54,7 +55,9 @@ const getStyles = (showText: boolean): (() => Styles) => {
         height: ${innerheight};
       `,
       d3outer: css`
+        position: relative;
         height: ${outerheight};
+        overflow: hidden;
       `,
       svg: css`
         position: absolute;
@@ -79,8 +82,8 @@ export const D3Graph: React.FC<{
   let context = cubism.context();
 
   const renderD3 = React.useCallback(
-    (div: HTMLDivElement | null) => {
-      if (!div || data.series.length === 0) {
+    (wrapperDiv: HTMLDivElement | null) => {
+      if (!wrapperDiv|| data.series.length === 0) {
         return;
       }
       const anHour = 60 * 60 * 1000;
@@ -91,7 +94,7 @@ export const D3Graph: React.FC<{
       let earliest = firstSeries[0];
       let latest = firstSeries[firstSeries.length - 1];
       let span = latest - earliest;
-      let size = div.clientWidth;
+      let size = wrapperDiv.clientWidth;
       // the width of the div with the panel
       let step = Math.floor(span / size);
       let cubismTimestamps: number[] = [];
@@ -106,9 +109,11 @@ export const D3Graph: React.FC<{
         return convertDataToCubism(series, seriesIndex, cubismTimestamps, context);
       });
 
-      div.innerHTML = '';
-      div.className = 'd3outer ' + stylesGetter.d3outer;
+      wrapperDiv.innerHTML = '';
+      wrapperDiv.className = stylesGetter.wrapper;
 
+      const outerDiv = d3.create('div');
+      outerDiv.node()!.className =  stylesGetter.d3outer;
       // size seems to be more the nubmer of pix
       // steps seems to be how often things things change in microseconds ?
       // it also control the range (ie. given the number of pixel and that a
@@ -153,13 +158,6 @@ export const D3Graph: React.FC<{
           context.axis().ticks(scale, count).orient(dataValue).render(d3.select(this));
         });
 
-      // create the rule
-      const ruleDiv = innnerDiv
-        .append('div')
-        .attr('class', 'rule')
-        .attr('background-color', theme.colors.primary.main)
-        .attr('id', 'rule');
-      context.rule().render(ruleDiv);
 
       // create the horizon
       const h = innnerDiv
@@ -169,6 +167,13 @@ export const D3Graph: React.FC<{
         .insert('div', '.bottom')
         .attr('class', 'horizon');
 
+      // create the rule
+      const ruleDiv = innnerDiv
+        .append('div')
+        .attr('class', 'rule')
+        .attr('background-color', theme.colors.primary.main)
+        .attr('id', 'rule');
+      context.rule().render(ruleDiv);
       // extent is the vertical range for the values for a given horinzon
       if (options.automaticExtents) {
         context.horizon().render(h);
@@ -183,8 +188,9 @@ export const D3Graph: React.FC<{
         innnerDiv.selectAll('.value').style('right', context.size() - i + 'px');
       });
 
-      div.append(innnerDiv.node()!);
-      div.append(axisDiv.node()!);
+      outerDiv.node()!.append(innnerDiv.node()!);
+      outerDiv.node()!.append(axisDiv.node()!);
+      wrapperDiv.append(outerDiv.node()!);
 
       if (options.text !== undefined && options.text !== null && options.text !== '') {
         log_debug('showing text');
@@ -192,7 +198,7 @@ export const D3Graph: React.FC<{
         const msgDivContainer = d3.create('div');
         msgDivContainer.node()!.className = stylesGetter.textBox;
         msgDivContainer.append('div').text(msg);
-        div.append(msgDivContainer.node()!);
+        wrapperDiv.append(msgDivContainer.node()!);
       }
     },
     [theme.colors.primary.main, context, data, options, stylesGetter]
@@ -213,7 +219,6 @@ export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) =
   return (
     <div
       className={cx(
-        styles.wrapper,
         css`
           width: ${width}px;
           height: ${height}px;
