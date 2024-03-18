@@ -34,6 +34,9 @@
       },
       "id": 1,
       "options": {
+        "automaticExtents": true,
+        "extentMax": 10,
+        "extentMin": -10,
         "seriesCountSize": "sm",
         "showSeriesCount": false,
         "text": ""
@@ -44,14 +47,50 @@
             "type": "grafana-testdata-datasource",
             "uid": "a0ce46a5-c7f8-4cec-997c-6314adf138a1"
           },
+          "max": 10,
+          "min": -5,
           "refId": "A",
           "scenarioId": "random_walk",
-          "seriesCount": 10,
-          "max": 10,
-          "min": -5
+          "seriesCount": 10
         }
       ],
       "title": "Panel Title",
+      "type": "cubismgrafana-panel"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "a0ce46a5-c7f8-4cec-997c-6314adf138a1"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "automaticExtents": true,
+        "extentMax": 10,
+        "extentMin": -10,
+        "seriesCountSize": "sm",
+        "showSeriesCount": false,
+        "text": "some text"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "a0ce46a5-c7f8-4cec-997c-6314adf138a1"
+          },
+          "max": 10,
+          "min": -5,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 10
+        }
+      ],
+      "title": "Panel Title 2",
       "type": "cubismgrafana-panel"
     }
   ],
