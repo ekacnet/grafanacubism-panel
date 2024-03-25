@@ -6,9 +6,8 @@ on:
       - master
       - main
   pull_request:
-    branches:
-      - master
-      - main
+    types: [opened, synchronize, edited, ready_for_review]
+
 
 permissions: read-all
 
