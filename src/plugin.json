@@ -14,7 +14,7 @@
       "large": "img/cubismlogo_large.png"
     },
     "links": [],
-    "screenshots": [],
+    "screenshots": [{"name": "simple panel", "path":"img/screenshot.png"}],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
