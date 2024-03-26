@@ -2,6 +2,8 @@
 
 This plugin allows to use [cubism.js](https://square.github.io/cubism/) in Grafana.
 
+For instance this ![example cubism](grafana_2024-03-24.png)
+
 ## Installation
 
 For a detailed guide on how to install and configure the plugin,
