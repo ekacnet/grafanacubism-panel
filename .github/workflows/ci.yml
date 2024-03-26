@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
+      SIGN_PLUGIN : ${{ vars.SIGN_PLUGIN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -96,7 +97,7 @@ jobs:
 
       - name: Sign plugin
         run: npm run sign
-        if: ${{ env.GRAFANA_ACCESS_POLICY_TOKEN != '' }}
+        if: ${{ env.SIGN_PLUGIN == 'yes' && env.GRAFANA_ACCESS_POLICY_TOKEN != '' }}
 
       - name: Get plugin metadata
         id: metadata
