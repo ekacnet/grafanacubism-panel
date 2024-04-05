@@ -55,7 +55,7 @@
         }
       ],
       "title": "Panel Title",
-      "type": "cubismgrafana-panel"
+      "type": "ekacnet-cubismgrafana-panel"
     },
     {
       "datasource": {
@@ -91,7 +91,7 @@
         }
       ],
       "title": "Panel Title 2",
-      "type": "cubismgrafana-panel"
+      "type": "ekacnet-cubismgrafana-panel"
     }
   ],
   "refresh": "",
