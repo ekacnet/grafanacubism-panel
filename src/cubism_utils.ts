@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { DataFrame } from '@grafana/data';
+import { DataFrame, getFieldDisplayName } from '@grafana/data';
 
 export function upSampleData(dataPoints: number[], dataPointsTS: number[], pointIndex: number) {
   return function (ts: number, tsIndex: number) {
@@ -78,6 +78,7 @@ export function minValue(values: number[]) {
 
 export function convertDataToCubism(series: DataFrame, seriesIndex: number, timestamps: number[], context: any) {
   if (series.length > 0) {
+    let name = getFieldDisplayName(series.fields[1], series);
     return context.metric(function (start: number, stop: number, step: number, callback: any) {
       let dataPoints: number[] = series.fields[1].values;
       let dataPointsTS: number[] = series.fields[0].values;
@@ -95,7 +96,7 @@ export function convertDataToCubism(series: DataFrame, seriesIndex: number, time
         values = _.chain(timestamps).map(downSampleData(timestamps, dataAndTS, override)).value();
       }
       callback(null, values);
-    }, series.fields[1].name);
+    }, name);
   } else {
     return null;
   }
