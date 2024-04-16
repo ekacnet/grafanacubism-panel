@@ -1,18 +1,35 @@
-<!-- This README file is going to be the one displayed on the Grafana.com website for your plugin. Uncomment and replace the content here before publishing.
+# Cubism graph
 
-Remove any remaining comments before publishing as these may be displayed on Grafana.com -->
+A panel to display [cubism](https://square.github.io/cubism) like graph in grafana.
 
-# Cubism-Grafana-Panel
+## Overview / Introduction
+Cubism is a way of representing information dense graphs in a limited amount of spaces, let's imagine you want to display the volume of 5xx errors that you are facing for each of the regions of your cloud provider.
 
-A panel to display cubism like graph in grafana
+The goto way is to do a regular graph with one serie per region, but if the volume are different across region you might be missing out something happening on lower volume region.
 
-<!-- To help maximize the impact of your README and improve usability for users, we propose the following loose structure:
+Cubism graph solve that by giving each serie its own horizon and by representing the increase of the metric by a darker color, if all of a sudden the region A is getting much darker you know right away that something is happening there.
 
-**BEFORE YOU BEGIN**
-- Ensure all links are absolute URLs so that they will work when the README is displayed within Grafana and Grafana.com
-- Be inspired ✨
-  - [grafana-polystat-panel](https://github.com/grafana/grafana-polystat-panel)
-  - [volkovlabs-variable-panel](https://github.com/volkovlabs/volkovlabs-variable-panel)
+Something similar to this graph:
+
+![cubism graph](https://raw.githubusercontent.com/ekacnet/grafanacubism-panel/main/src/img/screenshot.png)
+
+
+## Requirements
+
+Grafana 10.3 is required to install this plugin.
+
+## Getting Started
+
+1. Create a new visualization widget
+2. Create the query that you want to display
+3. On the right hand side click on time series and search for Cubism graph
+
+And you should get a cubism graph.
+
+## Contributing
+Look at the [grafanacubism-panel](https://github.com/ekacnet/grafanacubism-panel) project on Github to see how you can help
+<!--
+
 
 **ADD SOME BADGES**
 
@@ -30,22 +47,4 @@ Full example: ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?lo
 
 Consider other [badges](https://shields.io/badges) as you feel appropriate for your project.
 
-## Overview / Introduction
-Provide one or more paragraphs as an introduction to your plugin to help users understand why they should use it.
-
-Consider including screenshots:
-- in [plugin.json](https://grafana.com/developers/plugin-tools/reference-plugin-json#info) include them as relative links.
-- in the README ensure they are absolute URLs.
-
-## Requirements
-List any requirements or dependencies they may need to run the plugin.
-
-## Getting Started
-Provide a quick start on how to configure and use the plugin.
-
-## Documentation
-If your project has dedicated documentation available for users, provide links here. For help in following Grafana's style recommendations for technical documentation, refer to our [Writer's Toolkit](https://grafana.com/docs/writers-toolkit/).
-
-## Contributing
-Do you want folks to contribute to the plugin or provide feedback through specific means? If so, tell them how!
 -->
