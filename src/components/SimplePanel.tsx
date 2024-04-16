@@ -83,7 +83,7 @@ export const D3Graph: React.FC<{
 
   const renderD3 = React.useCallback(
     (wrapperDiv: HTMLDivElement | null) => {
-      if (!wrapperDiv|| data.series.length === 0) {
+      if (!wrapperDiv || data.series.length === 0) {
         return;
       }
       const anHour = 60 * 60 * 1000;
@@ -108,17 +108,28 @@ export const D3Graph: React.FC<{
       let cubismData = data.series.map(function (series, seriesIndex) {
         return convertDataToCubism(series, seriesIndex, cubismTimestamps, context);
       });
+      cubismData = cubismData.filter(function (el) {
+        if (el !== null) {
+          return el;
+        }
+      });
 
       wrapperDiv.innerHTML = '';
       wrapperDiv.className = stylesGetter.wrapper;
 
+      if (cubismData.length === 0) {
+        wrapperDiv.innerHTML = 'The series contained no data, check your query';
+        return;
+      }
       const outerDiv = d3.create('div');
-      outerDiv.node()!.className =  stylesGetter.d3outer;
+      outerDiv.node()!.className = stylesGetter.d3outer;
       // size seems to be more the nubmer of pix
       // steps seems to be how often things things change in microseconds ?
       // it also control the range (ie. given the number of pixel and that a
       // pixel reprensent 1e3 milliseconds, the range is 1e3 * size seconds)
       context.size(size).step(step);
+      // @ts-ignore
+      context.stop();
 
       const innnerDiv = d3.create('div');
       const axisDiv = d3.create('div');
@@ -158,7 +169,6 @@ export const D3Graph: React.FC<{
           context.axis().ticks(scale, count).orient(dataValue).render(d3.select(this));
         });
 
-
       // create the horizon
       const h = innnerDiv
         .selectAll('.horizon')
@@ -175,7 +185,7 @@ export const D3Graph: React.FC<{
         .attr('id', 'rule');
       context.rule().render(ruleDiv);
       // extent is the vertical range for the values for a given horinzon
-      if (options.automaticExtents) {
+      if (options.automaticExtents || options.extentMin === undefined || options.extentMax === undefined) {
         context.horizon().render(h);
       } else {
         context.horizon().extent([options.extentMin, options.extentMax]).render(h);

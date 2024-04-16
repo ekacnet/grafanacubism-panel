@@ -20,6 +20,7 @@ export function upSampleData(dataPoints: number[], dataPointsTS: number[], point
 }
 
 export function downSampleData(timestamps: number[], dataAndTS: number[][], override: { summaryType: string }) {
+  let val = 0;
   return function (ts: number, tsIndex: number) {
     let nextTs: null | number = null;
     if (tsIndex + 1 < timestamps.length) {
@@ -33,15 +34,20 @@ export function downSampleData(timestamps: number[], dataAndTS: number[][], over
         return point[1];
       });
 
-    if (override.summaryType === 'sum') {
-      return sumValues(values);
-    } else if (override.summaryType === 'min') {
-      return minValue(values);
-    } else if (override.summaryType === 'max') {
-      return maxValue(values);
-    } else {
-      return averageValues(values);
+    if (values.length === 0) {
+      return val;
     }
+
+    if (override.summaryType === 'sum') {
+      val = sumValues(values);
+    } else if (override.summaryType === 'min') {
+      val = minValue(values);
+    } else if (override.summaryType === 'max') {
+      val = maxValue(values);
+    } else {
+      val = averageValues(values);
+    }
+    return val;
   };
 }
 
@@ -71,22 +77,26 @@ export function minValue(values: number[]) {
 }
 
 export function convertDataToCubism(series: DataFrame, seriesIndex: number, timestamps: number[], context: any) {
-  return context.metric(function (start: number, stop: number, step: number, callback: any) {
-    let dataPoints: number[] = series.fields[1].values;
-    let dataPointsTS: number[] = series.fields[0].values;
-    let values: number[] = [];
-    if (timestamps.length === dataPoints.length) {
-      values = dataPoints.map(function (point: number) {
-        return point;
-      });
-    } else if (timestamps.length > dataPoints.length) {
-      let pointIndex = 0;
-      values = _.chain(timestamps).map(upSampleData(dataPoints, dataPointsTS, pointIndex)).value();
-    } else {
-      let override = { summaryType: 'avg' };
-      let dataAndTS = dataPointsTS.map((item, index) => [item, dataPoints[index]]);
-      values = _.chain(timestamps).map(downSampleData(timestamps, dataAndTS, override)).value();
-    }
-    callback(null, values);
-  }, series.fields[1].name);
+  if (series.length > 0) {
+    return context.metric(function (start: number, stop: number, step: number, callback: any) {
+      let dataPoints: number[] = series.fields[1].values;
+      let dataPointsTS: number[] = series.fields[0].values;
+      let values: number[] = [];
+      if (timestamps.length === dataPoints.length) {
+        values = dataPoints.map(function (point: number) {
+          return point;
+        });
+      } else if (timestamps.length > dataPoints.length) {
+        let pointIndex = 0;
+        values = _.chain(timestamps).map(upSampleData(dataPoints, dataPointsTS, pointIndex)).value();
+      } else {
+        let override = { summaryType: 'avg' };
+        let dataAndTS = dataPointsTS.map((item, index) => [item, dataPoints[index]]);
+        values = _.chain(timestamps).map(downSampleData(timestamps, dataAndTS, override)).value();
+      }
+      callback(null, values);
+    }, series.fields[1].name);
+  } else {
+    return null;
+  }
 }
