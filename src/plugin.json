@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "panel",
-  "name": "Cubism-Grafana-Panel",
+  "name": "Cubism Graph",
   "id": "ekacnet-cubismgrafana-panel",
   "info": {
     "keywords": ["panel"],

@@ -12,5 +12,5 @@ services:
     ports:
       - 4000:3000/tcp
     volumes:
-      - ./dist:/var/lib/grafana/plugins/cubismgrafana-panel
+      - ./dist:/var/lib/grafana/plugins/ekacnet-cubismgrafana-panel
       - ./provisioning:/etc/grafana/provisioning
