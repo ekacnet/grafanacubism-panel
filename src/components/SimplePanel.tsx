@@ -8,19 +8,13 @@ import * as d3 from 'd3';
 
 import { config } from '@grafana/runtime';
 import { convertDataToCubism } from '../cubism_utils';
+import { log_debug } from '../misc_utils';
+import { calculateSecondOffset } from '../date_utils';
 
 if (config.theme2.isDark) {
   require('../sass/cubism_dark.scss');
 } else {
   require('../sass/cubism_light.scss');
-}
-
-function log_debug(message?: any, ...optionalParams: any[]): void {
-  // Set it to true to enable debugging
-  let debug = false;
-  if (debug) {
-    return console.log(message, optionalParams);
-  }
 }
 
 interface Props extends PanelProps<SimpleOptions> {}
@@ -71,6 +65,7 @@ const getStyles = (showText: boolean): (() => Styles) => {
   };
 };
 
+
 export const D3Graph: React.FC<{
   height: number;
   width: number;
@@ -86,20 +81,28 @@ export const D3Graph: React.FC<{
       if (!wrapperDiv || data.series.length === 0) {
         return;
       }
+      // Initialize most of the variables and constants
+      let now = Date.now();
+      let begin = new Date();
+      const request = data.request!;
+
+      const start = +request.range.from;
+      const end = +request.range.to;
+      const span = end - start;
+
       const anHour = 60 * 60 * 1000;
       const aDay = 24 * anHour;
       const aWeek = 7 * aDay;
       const aMonth = 4 * aWeek;
-      let firstSeries = data.series[0].fields[0].values;
-      let earliest = firstSeries[0];
-      let latest = firstSeries[firstSeries.length - 1];
-      let span = latest - earliest;
-      let size = wrapperDiv.clientWidth;
+
       // the width of the div with the panel
+      let size = wrapperDiv.clientWidth;
+
       let step = Math.floor(span / size);
+
       let cubismTimestamps: number[] = [];
 
-      for (let ts = earliest; ts <= latest; ts = ts + step) {
+      for (let ts = start; ts <= end; ts = ts + step) {
         cubismTimestamps.push(ts);
       }
       log_debug('Step is:', step);
@@ -114,6 +117,10 @@ export const D3Graph: React.FC<{
         }
       });
 
+      let prev = +now
+      now = Date.now();
+      log_debug(`Took ${now - prev} to convert the series`);
+
       wrapperDiv.innerHTML = '';
       wrapperDiv.className = stylesGetter.wrapper;
 
@@ -121,19 +128,28 @@ export const D3Graph: React.FC<{
         wrapperDiv.innerHTML = 'The series contained no data, check your query';
         return;
       }
+
+      // setup Div layout and set classes
+      const delta = calculateSecondOffset(begin, +(end), request.timezone, request.range.from.utcOffset());
       const outerDiv = d3.create('div');
       outerDiv.node()!.className = stylesGetter.d3outer;
-      // size seems to be more the nubmer of pix
-      // steps seems to be how often things things change in microseconds ?
-      // it also control the range (ie. given the number of pixel and that a
-      // pixel reprensent 1e3 milliseconds, the range is 1e3 * size seconds)
-      context.size(size).step(step);
-      // @ts-ignore
-      context.stop();
-
+      // TODO rename that to canvas
       const innnerDiv = d3.create('div');
       const axisDiv = d3.create('div');
       innnerDiv.node()!.className = stylesGetter.d3inner;
+
+      // setup the context
+      // size is the nubmer of pixel
+      // steps seems to be the number of microseconds between change
+      // it also control the range (ie. given the number of pixel and that a
+      // pixel represent 1e3 milliseconds, the range is 1e3 * size seconds)
+      context.size(size).step(step);
+      // @ts-ignore
+      // negative delta means that we go in the past ...
+      context.serverDelay(delta*1000);
+      // @ts-ignore
+      context.stop();
+
 
       // create axis: try to find divs with .axis class
       axisDiv
@@ -168,6 +184,9 @@ export const D3Graph: React.FC<{
           }
           context.axis().ticks(scale, count).orient(dataValue).render(d3.select(this));
         });
+      prev = now
+      now = Date.now();
+      log_debug(`Took ${now - prev} ms to do the axis`);
 
       // create the horizon
       const h = innnerDiv
@@ -184,6 +203,7 @@ export const D3Graph: React.FC<{
         .attr('background-color', theme.colors.primary.main)
         .attr('id', 'rule');
       context.rule().render(ruleDiv);
+
       // extent is the vertical range for the values for a given horinzon
       if (options.automaticExtents || options.extentMin === undefined || options.extentMax === undefined) {
         context.horizon().render(h);
@@ -210,10 +230,12 @@ export const D3Graph: React.FC<{
         msgDivContainer.append('div').text(msg);
         wrapperDiv.append(msgDivContainer.node()!);
       }
+      prev = now
+      now = Date.now();
+      log_debug(`Took ${now - prev} ms to finish`);
     },
     [theme.colors.primary.main, context, data, options, stylesGetter]
   );
-
   return <div ref={renderD3} />;
 };
 
