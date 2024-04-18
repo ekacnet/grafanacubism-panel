@@ -2,7 +2,10 @@
 // generally used by snapshots, but can affect specific tests
 process.env.TZ = 'UTC';
 
-module.exports = {
+exports = {
   // Jest configuration provided by Grafana scaffolding
   ...require('./.config/jest.config'),
+  coverageDirectory: 'coverage/jest',
 };
+exports.coveragePathIgnorePatterns = ['.config/jest-setup.js'];
+module.exports = exports;

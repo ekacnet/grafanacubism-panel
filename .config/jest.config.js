@@ -13,6 +13,10 @@ module.exports = {
     '\\.(css|scss|sass)$': 'identity-obj-proxy',
     'react-inlinesvg': path.resolve(__dirname, 'jest', 'mocks', 'react-inlinesvg.tsx'),
   },
+  watchPathIgnorePatterns: [
+    '/node_modules/', // Ignore changes in node_modules directory
+    '/dist/', // Ignore changes in the dist directory
+  ],
   modulePaths: ['<rootDir>/src'],
   setupFilesAfterEnv: ['<rootDir>/jest-setup.js'],
   testEnvironment: 'jest-environment-jsdom',
