@@ -7,7 +7,7 @@ import * as cubism from 'cubism-es';
 import * as d3 from 'd3';
 
 import { config } from '@grafana/runtime';
-import { convertDataToCubism } from '../cubism_utils';
+import { convertAllDataToCubism} from '../cubism_utils';
 import { log_debug } from '../misc_utils';
 import { calculateSecondOffset } from '../date_utils';
 
@@ -21,15 +21,11 @@ interface Props extends PanelProps<SimpleOptions> {}
 
 type CSS = string;
 
-type Styles = {
-  wrapper: CSS;
-  d3inner: CSS;
-  d3outer: CSS;
-  svg: CSS;
-  textBox: CSS;
+interface CSSStyles {
+  [ key: string ]: CSS
 };
 
-const getStyles = (showText: boolean): (() => Styles) => {
+const getStyles = (showText: boolean): (() => CSSStyles) => {
   return function () {
     // 28px is the height of the axis
     let innerheight = 'calc(100% - 28px)';
@@ -38,27 +34,27 @@ const getStyles = (showText: boolean): (() => Styles) => {
       outerheight = 'calc(100% - 2em)';
     }
     return {
-      wrapper: css`
+      'wrapper': css`
         height: 100%;
         font-family: Open Sans;
         position: relative;
         overflow: hidden;
       `,
-      d3inner: css`
+      'd3inner': css`
         overflow: auto;
         height: ${innerheight};
       `,
-      d3outer: css`
+      'd3outer': css`
         position: relative;
         height: ${outerheight};
         overflow: hidden;
       `,
-      svg: css`
+      'svg': css`
         position: absolute;
         top: 0;
         left: 0;
       `,
-      textBox: css`
+      'textBox': css`
         max-height: 2em;
       `,
     };
@@ -71,7 +67,7 @@ export const D3Graph: React.FC<{
   width: number;
   data: PanelData;
   options: SimpleOptions;
-  stylesGetter: Styles;
+  stylesGetter: CSSStyles;
 }> = ({ height, width, data, options, stylesGetter }) => {
   const theme = useTheme2();
   let context = cubism.context();
@@ -107,10 +103,16 @@ export const D3Graph: React.FC<{
       }
       log_debug('Step is:', step);
       log_debug('Length of timestamps is ', cubismTimestamps.length);
+      log_debug('Size of the graph is ', size);
 
-      let cubismData = data.series.map(function (series, seriesIndex) {
-        return convertDataToCubism(series, seriesIndex, cubismTimestamps, context);
-      });
+      wrapperDiv.innerHTML = '';
+      wrapperDiv.className = stylesGetter["wrapper"];
+      if (data.series.length === 0) {
+        wrapperDiv.innerHTML = 'The series contained no data, check your query';
+        return;
+      }
+      let cubismData = convertAllDataToCubism(data.series, cubismTimestamps, context, step);
+
       cubismData = cubismData.filter(function (el) {
         if (el !== null) {
           return el;
@@ -121,8 +123,6 @@ export const D3Graph: React.FC<{
       now = Date.now();
       log_debug(`Took ${now - prev} to convert the series`);
 
-      wrapperDiv.innerHTML = '';
-      wrapperDiv.className = stylesGetter.wrapper;
 
       if (cubismData.length === 0) {
         wrapperDiv.innerHTML = 'The series contained no data, check your query';
@@ -132,11 +132,11 @@ export const D3Graph: React.FC<{
       // setup Div layout and set classes
       const delta = calculateSecondOffset(begin, +(end), request.timezone, request.range.from.utcOffset());
       const outerDiv = d3.create('div');
-      outerDiv.node()!.className = stylesGetter.d3outer;
+      outerDiv.node()!.className = stylesGetter["d3outer"];
       // TODO rename that to canvas
       const innnerDiv = d3.create('div');
       const axisDiv = d3.create('div');
-      innnerDiv.node()!.className = stylesGetter.d3inner;
+      innnerDiv.node()!.className = stylesGetter["d3inner"];
 
       // setup the context
       // size is the nubmer of pixel
@@ -226,7 +226,7 @@ export const D3Graph: React.FC<{
         log_debug('showing text');
         let msg = `${options.text}`;
         const msgDivContainer = d3.create('div');
-        msgDivContainer.node()!.className = stylesGetter.textBox;
+        msgDivContainer.node()!.className = stylesGetter["textBox"];
         msgDivContainer.append('div').text(msg);
         wrapperDiv.append(msgDivContainer.node()!);
       }

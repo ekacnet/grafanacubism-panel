@@ -1,7 +1,10 @@
-import _ from 'lodash';
 import { DataFrame, getFieldDisplayName } from '@grafana/data';
+import { log_debug } from './misc_utils';
+import _ from 'lodash';
 
-export function upSampleData(dataPoints: number[], dataPointsTS: number[], pointIndex: number) {
+// Take the datapoints of the timeseries and its associated timestamps
+export function upSampleData(dataPoints: number[], dataPointsTS: number[]) {
+  let pointIndex = 0;
   return function (ts: number, tsIndex: number) {
     let point = dataPoints[pointIndex];
     let nextPoint = null;
@@ -35,7 +38,22 @@ export function downSampleData(timestamps: number[], dataAndTS: number[][], over
       });
 
     if (values.length === 0) {
-      return val;
+      if (tsIndex === 0 || nextTs === null) {
+        return null;
+      }
+      // Potentially extrapolate some points but it's not clear why we should do that
+      let lastTS = timestamps[tsIndex - 1];
+      values = dataAndTS
+        .filter(function (point) {
+          return point[0] >= lastTS && point[0] < ts;
+        })
+        .map(function (point) {
+          return point[1];
+        });
+
+      if (values.length === 0) {
+        return null;
+      }
     }
 
     if (override.summaryType === 'sum') {
@@ -76,28 +94,84 @@ export function minValue(values: number[]) {
   });
 }
 
-export function convertDataToCubism(series: DataFrame, seriesIndex: number, timestamps: number[], context: any) {
-  if (series.length > 0) {
-    let name = getFieldDisplayName(series.fields[1], series);
+// Take an array of timestamps that map to the way we want to display the timeseries in grafana
+// take also a serie
+export function convertDataToCubism(
+  serie: DataFrame,
+  serieIndex: number,
+  timestamps: number[],
+  context: any,
+  downSample: boolean
+) {
+  if (serie.length > 0) {
+    let name = getFieldDisplayName(serie.fields[1], serie);
     return context.metric(function (start: number, stop: number, step: number, callback: any) {
-      let dataPoints: number[] = series.fields[1].values;
-      let dataPointsTS: number[] = series.fields[0].values;
-      let values: number[] = [];
-      if (timestamps.length === dataPoints.length) {
-        values = dataPoints.map(function (point: number) {
-          return point;
-        });
-      } else if (timestamps.length > dataPoints.length) {
-        let pointIndex = 0;
-        values = _.chain(timestamps).map(upSampleData(dataPoints, dataPointsTS, pointIndex)).value();
-      } else {
-        let override = { summaryType: 'avg' };
-        let dataAndTS = dataPointsTS.map((item, index) => [item, dataPoints[index]]);
+      let dataPoints: number[] = serie.fields[1].values;
+      let dataPointsTS: number[] = serie.fields[0].values;
+      let values: Array<number | null> = [];
+      let override = { summaryType: 'avg' };
+      let dataAndTS = dataPointsTS.map((item, index) => [item, dataPoints[index]]);
+      if (downSample) {
         values = _.chain(timestamps).map(downSampleData(timestamps, dataAndTS, override)).value();
+      } else {
+        values = _.chain(timestamps).map(upSampleData(dataPoints, dataPointsTS)).value();
       }
       callback(null, values);
     }, name);
   } else {
     return null;
   }
+}
+
+export function convertAllDataToCubism(series: DataFrame[], cubismTimestamps: number[], context: any, step: number) {
+  let longest = series[0].length;
+  let longestIndex = 0;
+
+  for (let i = 1; i < series.length; i++) {
+    if (series[i].length > longest) {
+      longest = series[i].length;
+      longestIndex = i;
+    }
+  }
+  // Let's look at the longest one, if the step is bigger than what we have in the serie we downsample
+  const name = 'Time';
+  let s = series[longestIndex];
+  let ts = s.fields.filter(function (v) {
+    return v.name === name ? true : false;
+  })[0];
+  let previousts = -1;
+  let v: number[] = [];
+  if (ts === undefined) {
+    log_debug(`Couldn't find a field with name ${name} using field 0`);
+    ts = s.fields[0];
+  }
+  log_debug(`There is ${ts.values.length} elements in the longest`);
+  for (let i = 0; i < ts.values.length; i++) {
+    if (previousts !== -1) {
+      v.push(ts.values[i] - previousts);
+    }
+    previousts = ts.values[i];
+  }
+  v.sort((a: number, b: number) => a - b);
+
+  // Calculate the index for P99
+  const index = Math.ceil(0.99 * v.length) - 1;
+  // Look at what is the ratio when comparing the smallest step (ie. when we have most of the data
+  // to the largest (ie. when there is gaps), if the ratio is more than 3 we will
+  // downsample because it means that there is massive gaps
+  const stepRatio = v[index] / v[0];
+
+  let downsample = false;
+  // if there is too much missing points (ie. p99 has has at least 3x the smallest step then force
+  // downsample because upSample will not give good results
+  if (stepRatio > 3 || s.fields[0].values.length > cubismTimestamps.length) {
+    downsample = true;
+  }
+  log_debug(
+    `downsample = ${downsample} v[index] = ${v[index]} stepRatio = ${stepRatio} index = ${index}, step = ${step}`
+  );
+
+  return series.map(function (serie, serieIndex) {
+    return convertDataToCubism(serie, serieIndex, cubismTimestamps, context, downsample);
+  });
 }
