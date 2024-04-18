@@ -1,3 +1,4 @@
+ARG pods_csv=/dev/null
 ARG grafana_version=latest
 ARG grafana_image=grafana-enterprise
 
@@ -13,4 +14,10 @@ ENV GF_DEFAULT_APP_MODE "development"
 
 # Inject livereload script into grafana index.html
 USER root
+RUN grafana-cli plugins install marcusolsson-csv-datasource
+
+#  [plugin.marcusolsson-csv-datasource]
+#    allow_local_mode = true
+RUN echo -ne "[plugin.marcusolsson-csv-datasource]\n  allow_local_mode = true\n" >> /etc/grafana/grafana.ini
+COPY ${pods_csv} /tmp/pods.csv
 RUN sed -i 's|</body>|<script src="http://localhost:35729/livereload.js"></script></body>|g' /usr/share/grafana/public/views/index.html
