@@ -76,11 +76,6 @@ const config = async (env): Promise<Configuration> => {
     module: {
       rules: [
         {
-          test: /\.js$/,
-          enforce: "pre",
-          use: ["source-map-loader"],
-        },
-        {
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
