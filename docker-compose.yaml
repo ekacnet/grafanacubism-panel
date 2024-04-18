@@ -9,8 +9,18 @@ services:
       args:
         grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
         grafana_version: ${GRAFANA_VERSION:-10.3.3}
+    networks:
+      - grafana
     ports:
       - 4000:3000/tcp
+    external_links:
+      - prometheus-app:prom
+
     volumes:
       - ./dist:/var/lib/grafana/plugins/ekacnet-cubismgrafana-panel
       - ./provisioning:/etc/grafana/provisioning
+
+networks:
+  grafana:
+    name: grafanacubism-panel_default
+    attachable: true

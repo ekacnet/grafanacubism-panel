@@ -4,3 +4,15 @@ datasources:
   - name: grafana-testdata-datasource
     type: testdata
     uid: a0ce46a5-c7f8-4cec-997c-6314adf138a1
+  - name: csv-testdata-datasource
+    type: marcusolsson-csv-datasource
+    uid: a0ce46a5-c7f8-4cec-997c-6314adf138a2
+    url: /tmp/pods.csv
+    jsonData:
+      storage: local
+  - name: prometheus
+    type: prometheus
+    uid: aaad26df-aaa4-4734-9904-74004d9a2d78
+    url: http://172.23.0.3:9090
+    jsonData:
+      httpMethod: POST
