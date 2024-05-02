@@ -213,9 +213,11 @@ export const D3Graph: React.FC<{
 
       context.on('focus', function (i: number) {
         if (i === null) {
-          return;
+          innnerDiv.selectAll('.value').style('right', null);
+        } else {
+          const rightStyle: string =  context.size() - i + 'px';
+          innnerDiv.selectAll('.value').style('right', rightStyle);
         }
-        innnerDiv.selectAll('.value').style('right', context.size() - i + 'px');
       });
 
       outerDiv.node()!.append(innnerDiv.node()!);
