@@ -1,4 +1,4 @@
-export interface SimpleOptions {
+export interface CubismOptions {
   text: string;
   extentMin: number;
   extentMax: number;
