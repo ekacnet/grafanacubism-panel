@@ -1,6 +1,6 @@
 import React from 'react';
 import { PanelProps, PanelData } from '@grafana/data';
-import { SimpleOptions } from 'types';
+import { CubismOptions } from 'types';
 import { css, cx } from '@emotion/css';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import * as cubism from 'cubism-es';
@@ -17,7 +17,7 @@ if (config.theme2.isDark) {
   require('../sass/cubism_light.scss');
 }
 
-interface Props extends PanelProps<SimpleOptions> {}
+interface Props extends PanelProps<CubismOptions> {}
 
 type CSS = string;
 
@@ -66,7 +66,7 @@ export const D3Graph: React.FC<{
   height: number;
   width: number;
   data: PanelData;
-  options: SimpleOptions;
+  options: CubismOptions;
   stylesGetter: CSSStyles;
 }> = ({ height, width, data, options, stylesGetter }) => {
   const theme = useTheme2();
@@ -241,7 +241,7 @@ export const D3Graph: React.FC<{
   return <div ref={renderD3} />;
 };
 
-export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) => {
+export const CubismPanel: React.FC<Props> = ({ options, data, width, height }) => {
   let showText = false;
 
   if (options.text !== undefined && options.text !== null && options.text !== '') {

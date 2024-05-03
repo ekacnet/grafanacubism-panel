@@ -1,8 +1,8 @@
 import { PanelPlugin } from '@grafana/data';
-import { SimpleOptions } from './types';
-import { SimplePanel } from './components/SimplePanel';
+import { CubismOptions } from './types';
+import { CubismPanel } from './components/CubismPanel';
 
-export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOptions((builder) => {
+export const plugin = new PanelPlugin<CubismOptions>(CubismPanel).setPanelOptions((builder) => {
   return builder
     .addBooleanSwitch({
       path: 'automaticExtents',
