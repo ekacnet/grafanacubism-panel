@@ -8,6 +8,9 @@ declare module 'cubism-es' {
     size(): number;
     axis(): any;
     step(_s: number): number;
+    serverDelay(s: number);
+    stop();
+    setCSSClass(string, string);
   }
   export function context(): Context;
 }
