@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { PanelProps, PanelData, GrafanaTheme2 } from '@grafana/data';
 import { CubismOptions } from 'types';
 import { css } from '@emotion/css';
@@ -168,18 +168,22 @@ export const D3Graph: React.FC<{
 }> = ({ height, width, data, options }) => {
   let context = cubism.context();
   let showText = false;
-
   if (options.text !== undefined && options.text !== null && options.text !== '') {
     showText = true;
   }
   log_debug('Show text is ', showText);
   const styles = useStyles2(getStyles(showText, useTheme2()));
-
+  // useState() ...
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const renderD3 = React.useCallback(
      D3GraphRender(context, data, options, styles)
     , [context, data, options, styles]
   )
+  useEffect(() => {
+    return () => {
+      context.stop()
+    };
+  });
   return <div
     ref={renderD3} />;
 };
