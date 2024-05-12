@@ -13,6 +13,6 @@ datasources:
   - name: prometheus
     type: prometheus
     uid: aaad26df-aaa4-4734-9904-74004d9a2d78
-    url: http://172.23.0.3:9090
+    url: http://prometheus-app:9090
     jsonData:
       httpMethod: POST
