@@ -124,6 +124,11 @@ export function convertDataToCubism(
 }
 
 export function convertAllDataToCubism(series: DataFrame[], cubismTimestamps: number[], context: any, step: number) {
+  if (series.length === 0) {
+    return series.map(function (serie, serieIndex) {
+      return null;
+    });
+  }
   let longest = series[0].length;
   let longestIndex = 0;
 
@@ -143,7 +148,13 @@ export function convertAllDataToCubism(series: DataFrame[], cubismTimestamps: nu
   let v: number[] = [];
   if (ts === undefined) {
     log_debug(`Couldn't find a field with name ${name} using field 0`);
-    ts = s.fields[0];
+    if (s.fields.length > 0) {
+      ts = s.fields[0];
+    } else {
+      return series.map(function (serie, serieIndex) {
+        return null;
+      });
+    }
   }
   log_debug(`There is ${ts.values.length} elements in the longest`);
   for (let i = 0; i < ts.values.length; i++) {
