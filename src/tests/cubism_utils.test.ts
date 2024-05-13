@@ -9,8 +9,7 @@ import {
   minValue,
 } from '../cubism_utils';
 import _ from 'lodash';
-import { toDataFrame } from '@grafana/data';
-
+import {  toDataFrame } from '@grafana/data';
 describe('convertDataToCubism', () => {
   it('should be defined', () => {
     expect(convertDataToCubism).toBeDefined();
@@ -500,6 +499,25 @@ describe('downSampleData', () => {
     let values = _.chain(timestamps).map(downSampleData(timestamps, val, override)).value();
     expect(values.length).toBe(timestamps.length);
     expect(values).toStrictEqual([null, null, null, 1, 2, 2, null, null, null, null, 3.5, 3.5, null, null]);
+  });
+  it('should convertAllDataToCubism just work when there is nothing', () => {
+    const timestamps = [1, 2, 3, 4];
+    const context = {
+      metric: (callback: any, name: string) => {},
+    };
+    const input2 = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+        [300, 3],
+        [300, 4],
+      ],
+    };
+    let series = [toDataFrame(input2)];
+    series[0].fields = [];
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
+    expect(convertAllDataToCubism(series, timestamps, context, 1)).toStrictEqual([null]);
   });
   it('should convertAllDataToCubism just work', () => {
     const input1 = {
