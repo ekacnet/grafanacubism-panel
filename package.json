@@ -1,6 +1,6 @@
 {
   "name": "cubism-grafana-panel",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A panel to display cubism like graph in grafana",
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
