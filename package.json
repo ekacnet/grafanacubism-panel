@@ -5,8 +5,8 @@
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
-    "test": "jest --watch --onlyChanged",
-    "test:ci": "jest --passWithNoTests --maxWorkers 4 --coverage",
+    "test": "jest --watch --onlyChanged --detectOpenHandles --forceExit",
+    "test:ci": "jest --passWithNoTests --detectOpenHandles --forceExit --maxWorkers 4 --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --ignore-path ./dist/module.js --ignore-path ./.gitignore --ignore-path ./3rdparty/.eslintignore --ext .js,.jsx,.ts,.tsx src",
     "lint:fix": "npm run lint -- --fix",
@@ -21,7 +21,7 @@
     "server": "docker-compose up --build",
     "sign": "npx --yes @grafana/sign-plugin@latest",
     "pretty": "prettier --single-quote  --write \"{src,__{tests,demo,dist}__}/**/*.ts*\"",
-    "prepare": "relative-deps"
+    "prepare": "cd 3rdparty/cubism-es; npm install; npm run build"
   },
   "nyc": {
     "report-dir": "coverage/cypress"
@@ -55,13 +55,13 @@
     "jest-environment-jsdom": "^29.5.0",
     "node-sass": "^9.0.0",
     "prettier": "^2.8.7",
-    "relative-deps": "^1.0.7",
     "replace-in-file-webpack-plugin": "^1.0.6",
     "sass": "^1.63.2",
     "sass-loader": "^13.3.1",
     "source-map-loader": "^5.0.0",
     "style-loader": "^3.3.3",
     "swc-loader": "^0.2.3",
+    "text-encoding": "^0.7.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^4.8.4",
@@ -85,8 +85,5 @@
     "react-dom": "^18.2.0",
     "tslib": "^2.5.3"
   },
-  "packageManager": "npm@10.1.0",
-  "relativeDependencies": {
-    "cubism-es": "3rdparty/cubism-es/"
-  }
+  "packageManager": "npm@10.1.0"
 }

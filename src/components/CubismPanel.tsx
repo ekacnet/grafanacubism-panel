@@ -58,6 +58,9 @@ const getStyles = (showText: boolean, theme: GrafanaTheme2): StylesGetter => {
       outerheight = 'calc(100% - 2em)';
     }
     return {
+      'zoom': css`
+        label: cubism-zoom;
+      `,
       'cubism-panel': css`
         label: cubism-panel;
         height: 100%;
@@ -189,7 +192,6 @@ export const D3Graph: React.FC<{
 };
 
 export const CubismPanel: React.FC<Props> = ({ options, data, width, height }) => {
-
   return (
       <D3Graph height={height} width={width} data={data} options={options}  />
   );

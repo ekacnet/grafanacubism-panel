@@ -1,9 +1,17 @@
 import { PanelPlugin } from '@grafana/data';
 import { CubismOptions } from './types';
 import { CubismPanel } from './components/CubismPanel';
+import { DataLinksEditor } from './components/DataLinksEditor';
 
 export const plugin = new PanelPlugin<CubismOptions>(CubismPanel).setPanelOptions((builder) => {
   return builder
+    .addCustomEditor({
+      id: 'links',
+      path: 'links',
+      name: 'Links',
+      category: ['Data Links'],
+      editor: DataLinksEditor,
+    })
     .addBooleanSwitch({
       path: 'automaticExtents',
       name: 'Let cubism calculate the extent automatically',
