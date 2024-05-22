@@ -3,7 +3,7 @@ import * as cubism from 'cubism-es';
 import * as d3 from 'd3';
 
 import { PanelData } from '@grafana/data';
-import { convertAllDataToCubism } from '../cubism_utils';
+import { getSerieByName, convertAllDataToCubism } from '../cubism_utils';
 import { log_debug } from '../misc_utils';
 import { calculateSecondOffset } from '../date_utils';
 
@@ -20,7 +20,11 @@ export const D3GraphRender = (
   styles: CSSStyles
 ): ((wrapperDiv: HTMLDivElement | null) => void) => {
   return (panelDiv: HTMLDivElement | null) => {
-    if (!panelDiv || data.series.length === 0) {
+    if (!panelDiv) {
+      return;
+    }
+    if (data.series.length === 0) {
+      panelDiv.innerHTML = 'The series contained no data, check your query';
       return;
     }
     // Initialize most of the variables and constants
@@ -59,10 +63,6 @@ export const D3GraphRender = (
 
     panelDiv.innerHTML = '';
     panelDiv.className = styles['cubism-panel'];
-    if (data.series.length === 0) {
-      panelDiv.innerHTML = 'The series contained no data, check your query';
-      return;
-    }
     let cubismData = convertAllDataToCubism(data.series, cubismTimestamps, context, step);
 
     cubismData = cubismData.filter(function (el) {
@@ -103,11 +103,6 @@ export const D3GraphRender = (
     context.setCSSClass('title', styles['title']);
     context.setCSSClass('value', styles['value']);
 
-    /*
-      .attr('className', function (dataValue) {
-        return dataValue + ' ' + styles['axis'];
-      })
-      */
     // create axis: try to find divs with .axis class
     axisDiv
       .selectAll('.' + styles['axis'])
@@ -154,7 +149,10 @@ export const D3GraphRender = (
 
     // create the rule
     const ruleDiv = canvasDiv.append('div').attr('class', `${styles['rule']}`).attr('id', 'rule');
+    const zoomDiv = canvasDiv.append('div').attr('class', 'zoom');
     context.rule().render(ruleDiv);
+    context.zoom(zoomCallbackGen(context, data, options)).render(zoomDiv);
+    context.zoom().setZoomType('onelane');
 
     // extent is the vertical range for the values for a given horinzon
     if (options.automaticExtents || options.extentMin === undefined || options.extentMax === undefined) {
@@ -189,4 +187,63 @@ export const D3GraphRender = (
     log_debug(`Took ${now - prev} ms to finish`);
     return;
   };
+};
+
+function isString(value: unknown): asserts value is string {
+  if (typeof value !== 'string') {
+    throw new Error('Not a string');
+  }
+}
+
+export const zoomCallbackGen = (
+  context: cubism.Context,
+  data: PanelData,
+  options: CubismOptions
+): cubism.zoomCallback => {
+  const f = (start: number, end: number, selection: cubism.d3Selection) => {
+    if (options.links.length === 0) {
+      console.log("Can't do any zoom, there is no links to zoom to");
+      return;
+    }
+    log_debug(`Doing a zoom from point ${start} to point ${end}`);
+
+    if (options.links.length > 1) {
+      console.log('There is more than one link, linked to this graph, will pick the first one');
+    }
+    let link = options.links[0].url;
+    isString(link);
+    const titleElement = selection.select('.' + context.getCSSClass('title'));
+    let serieName = titleElement.text();
+    let field = getSerieByName(data.series, serieName);
+    if (field === null) {
+      throw new Error(`unable to find the field in the time series associated with the name ${serieName}`);
+    }
+    let filteredString = link.replace(/\ufeff/g, '');
+
+    const pattern = /\${[^}]*}/g;
+    const extractedVariables: string[] = filteredString.match(pattern) || [];
+    let unsupported: string[] = [];
+    const prefix = '__field.labels';
+    for (let j = 0; j < extractedVariables.length; j++) {
+      if (!extractedVariables[j].slice(2, -1).startsWith(prefix)) {
+        unsupported.push(extractedVariables[j].slice(2, -1));
+      } else {
+        const label = extractedVariables[j].slice(prefix.length + 3, -1);
+        const labels = field.labels!;
+        let v = labels[label];
+        filteredString = filteredString.replace(extractedVariables[j], encodeURIComponent(v));
+      }
+    }
+    if (unsupported.length > 0) {
+      throw new Error('Unsupported variable in the url:' + unsupported.join(', '));
+    }
+    filteredString = filteredString + '&from=' + +context._scale.invert(start);
+    filteredString = filteredString + '&to=' + +context._scale.invert(end);
+    if (options.links[0].targetBlank) {
+      window.open(filteredString, '_blank');
+    } else {
+      window.location.assign(filteredString);
+    }
+  };
+  return f;
 };

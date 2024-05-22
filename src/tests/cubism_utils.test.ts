@@ -7,9 +7,10 @@ import {
   averageValues,
   maxValue,
   minValue,
+  getSerieByName,
 } from '../cubism_utils';
 import _ from 'lodash';
-import {  toDataFrame } from '@grafana/data';
+import { DataFrame, toDataFrame } from '@grafana/data';
 describe('convertDataToCubism', () => {
   it('should be defined', () => {
     expect(convertDataToCubism).toBeDefined();
@@ -505,6 +506,14 @@ describe('downSampleData', () => {
     const context = {
       metric: (callback: any, name: string) => {},
     };
+    expect(() => convertAllDataToCubism([], timestamps, context, 1)).not.toThrow();
+    expect(convertAllDataToCubism([], timestamps, context, 1)).toStrictEqual([null]);
+  });
+  it('should convertAllDataToCubism just work when there is nothing', () => {
+    const timestamps = [1, 2, 3, 4];
+    const context = {
+      metric: (callback: any, name: string) => {},
+    };
     const input2 = {
       target: 'Field Name',
       datapoints: [
@@ -622,5 +631,125 @@ describe('downSampleData', () => {
 
     expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
     expect(values).toStrictEqual([150, 350, 500]);
+  });
+});
+describe('getSerieByName', () => {
+  it('should return null if series is empty', () => {
+    const series: DataFrame[] = [];
+    const result = getSerieByName(series, 'nameField1');
+    expect(result).toBe(null);
+  });
+  it('should return null if no matching field name is found', () => {
+    const input1 = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const series = [toDataFrame(input1)];
+    series[0].length = 1;
+
+    const result = getSerieByName(series, 'nonExistentField');
+    expect(result).toBe(null);
+  });
+
+  it('should return null if no matching field name is found', () => {
+    const input1 = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const series = [toDataFrame(input1)];
+
+    const result = getSerieByName(series, 'nonExistentField');
+    expect(result).toBe(null);
+  });
+
+  it('should return the correct field when found', () => {
+    const input1 = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const input2 = {
+      target: 'Another Field',
+      datapoints: [
+        [300, 3],
+        [400, 4],
+      ],
+    };
+    const series = [toDataFrame(input1), toDataFrame(input2)];
+    const result = getSerieByName(series, 'Field Name');
+    expect(result).not.toBe(null);
+    expect(result?.state).not.toBe(null);
+    expect(result?.state?.displayName).toEqual('Field Name');
+  });
+
+  it('should return null if multiple fields with the same name are found', () => {
+    const input1 = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const input2 = {
+      target: 'Field Name',
+      datapoints: [
+        [300, 3],
+        [400, 4],
+      ],
+    };
+    const series = [toDataFrame(input1), toDataFrame(input2)];
+
+    const result = getSerieByName(series, 'Field Name');
+    expect(result).toBe(null);
+  });
+
+  it('should return null if field name is found in the first position of the fields array in any serie', () => {
+    const input1 = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const input2 = {
+      target: 'Another Field',
+      datapoints: [
+        [300, 3],
+        [400, 4],
+      ],
+    };
+    const series = [toDataFrame(input1), toDataFrame(input2)];
+
+    const result = getSerieByName(series, 'time');
+    expect(result).toBe(null);
+  });
+
+  it('should return null when multiple matches are found in different series', () => {
+    const input1 = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const input2 = {
+      target: 'Field Name',
+      datapoints: [
+        [300, 3],
+        [400, 4],
+      ],
+    };
+    const series = [toDataFrame(input1), toDataFrame(input2)];
+
+    const result = getSerieByName(series, 'Field Name');
+    expect(result).toBe(null);
   });
 });

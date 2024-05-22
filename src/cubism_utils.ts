@@ -94,6 +94,38 @@ export function minValue(values: number[]) {
   });
 }
 
+export function getSerieByName(series: DataFrame[], name: string) {
+  if (series.length === 0) {
+    return null;
+  }
+  let matching = series.filter((s: DataFrame) => {
+    if (s.length < 2) {
+      return false;
+    }
+    for (let j = 1; j < s.fields.length; j++) {
+      if (getFieldDisplayName(s.fields[j], s) === name) {
+        return true;
+      }
+    }
+    return false;
+  });
+  if (matching.length === 0) {
+    return null;
+  }
+  let fields = matching.map((s, i) => {
+    for (let j = 1; j < s.fields.length; j++) {
+      if (getFieldDisplayName(s.fields[j], s) === name) {
+        return s.fields[j];
+      }
+    }
+    return null;
+  });
+  fields = fields.filter((f) => f !== null);
+  if (fields.length === 1) {
+    return fields[0];
+  }
+  return null;
+}
 // Take an array of timestamps that map to the way we want to display the timeseries in grafana
 // take also a serie
 export function convertDataToCubism(
@@ -104,6 +136,7 @@ export function convertDataToCubism(
   downSample: boolean
 ) {
   if (serie.length > 0) {
+    //TODO fix for series with more than one value
     let name = getFieldDisplayName(serie.fields[1], serie);
     return context.metric(function (start: number, stop: number, step: number, callback: any) {
       let dataPoints: number[] = serie.fields[1].values;
@@ -125,9 +158,7 @@ export function convertDataToCubism(
 
 export function convertAllDataToCubism(series: DataFrame[], cubismTimestamps: number[], context: any, step: number) {
   if (series.length === 0) {
-    return series.map(function (serie, serieIndex) {
-      return null;
-    });
+    return [null];
   }
   let longest = series[0].length;
   let longestIndex = 0;
@@ -183,6 +214,7 @@ export function convertAllDataToCubism(series: DataFrame[], cubismTimestamps: nu
   );
 
   return series.map(function (serie, serieIndex) {
-    return convertDataToCubism(serie, serieIndex, cubismTimestamps, context, downsample);
+    const fnc = convertDataToCubism(serie, serieIndex, cubismTimestamps, context, downsample);
+    return fnc;
   });
 }
