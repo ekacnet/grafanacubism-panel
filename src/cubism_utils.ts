@@ -1,5 +1,7 @@
 import { DataFrame, getFieldDisplayName } from '@grafana/data';
+import { SamplingType } from 'types';
 import { log_debug } from './misc_utils';
+import * as cubism from 'cubism-es';
 import _ from 'lodash';
 
 // Take the datapoints of the timeseries and its associated timestamps
@@ -98,21 +100,10 @@ export function getSerieByName(series: DataFrame[], name: string) {
   if (series.length === 0) {
     return null;
   }
-  let matching = series.filter((s: DataFrame) => {
+  let fields = series.map((s, i) => {
     if (s.length < 2) {
-      return false;
+      return null;
     }
-    for (let j = 1; j < s.fields.length; j++) {
-      if (getFieldDisplayName(s.fields[j], s) === name) {
-        return true;
-      }
-    }
-    return false;
-  });
-  if (matching.length === 0) {
-    return null;
-  }
-  let fields = matching.map((s, i) => {
     for (let j = 1; j < s.fields.length; j++) {
       if (getFieldDisplayName(s.fields[j], s) === name) {
         return s.fields[j];
@@ -133,8 +124,8 @@ export function convertDataToCubism(
   serieIndex: number,
   timestamps: number[],
   context: any,
-  downSample: boolean
-) {
+  samplingType: SamplingType
+): cubism.Metric | null {
   if (serie.length > 0) {
     //TODO fix for series with more than one value
     let name = getFieldDisplayName(serie.fields[1], serie);
@@ -144,10 +135,12 @@ export function convertDataToCubism(
       let values: Array<number | null> = [];
       let override = { summaryType: 'avg' };
       let dataAndTS = dataPointsTS.map((item, index) => [item, dataPoints[index]]);
-      if (downSample) {
+      if (samplingType === SamplingType.Downsample) {
         values = _.chain(timestamps).map(downSampleData(timestamps, dataAndTS, override)).value();
-      } else {
+      } else if (samplingType === SamplingType.Upsample) {
         values = _.chain(timestamps).map(upSampleData(dataPoints, dataPointsTS)).value();
+      } else {
+        throw new Error(`SamplingType ${samplingType} is not allowed for convertDataToCubism`);
       }
       callback(null, values);
     }, name);
@@ -156,7 +149,13 @@ export function convertDataToCubism(
   }
 }
 
-export function convertAllDataToCubism(series: DataFrame[], cubismTimestamps: number[], context: any, step: number) {
+export function convertAllDataToCubism(
+  series: DataFrame[],
+  cubismTimestamps: number[],
+  context: any,
+  step: number,
+  samplingType: SamplingType
+): cubism.Metric[] {
   if (series.length === 0) {
     return [null];
   }
@@ -203,18 +202,22 @@ export function convertAllDataToCubism(series: DataFrame[], cubismTimestamps: nu
   // downsample because it means that there is massive gaps
   const stepRatio = v[index] / v[0];
 
-  let downsample = false;
-  // if there is too much missing points (ie. p99 has has at least 3x the smallest step then force
-  // downsample because upSample will not give good results
-  if (stepRatio > 3 || s.fields[0].values.length > cubismTimestamps.length) {
-    downsample = true;
+  if (samplingType === SamplingType.Auto) {
+    // if there is too much missing points (ie. p99 has has at least 3x the smallest step then force
+    // downsample because upSample will not give good results
+    if (stepRatio > 3 || s.fields[0].values.length > cubismTimestamps.length) {
+      samplingType = SamplingType.Downsample;
+    } else {
+      samplingType = SamplingType.Upsample;
+    }
   }
+
   log_debug(
-    `downsample = ${downsample} v[index] = ${v[index]} stepRatio = ${stepRatio} index = ${index}, step = ${step}`
+    `sampling = ${samplingType} v[index] = ${v[index]} stepRatio = ${stepRatio} index = ${index}, step = ${step}`
   );
 
   return series.map(function (serie, serieIndex) {
-    const fnc = convertDataToCubism(serie, serieIndex, cubismTimestamps, context, downsample);
+    const fnc = convertDataToCubism(serie, serieIndex, cubismTimestamps, context, samplingType);
     return fnc;
   });
 }

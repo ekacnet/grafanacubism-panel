@@ -1,8 +1,8 @@
-import { CubismOptions } from 'types';
+import { SamplingType, CubismOptions } from 'types';
 import * as cubism from 'cubism-es';
 import * as d3 from 'd3';
 
-import { PanelData } from '@grafana/data';
+import { PanelData, DataFrame } from '@grafana/data';
 import { getSerieByName, convertAllDataToCubism } from '../cubism_utils';
 import { log_debug } from '../misc_utils';
 import { calculateSecondOffset } from '../date_utils';
@@ -17,7 +17,8 @@ export const D3GraphRender = (
   context: cubism.Context,
   data: PanelData,
   options: CubismOptions,
-  styles: CSSStyles
+  styles: CSSStyles,
+  helper: (d: DataFrame[], n: number[], o: any, z: number, t: SamplingType) => cubism.Metric[] = convertAllDataToCubism
 ): ((wrapperDiv: HTMLDivElement | null) => void) => {
   return (panelDiv: HTMLDivElement | null) => {
     if (!panelDiv) {
@@ -63,11 +64,21 @@ export const D3GraphRender = (
 
     panelDiv.innerHTML = '';
     panelDiv.className = styles['cubism-panel'];
-    let cubismData = convertAllDataToCubism(data.series, cubismTimestamps, context, step);
+    let sampling: SamplingType = SamplingType.Auto;
+    if (!options.automaticSampling) {
+      if (!options.sampleType) {
+        sampling = SamplingType.Upsample;
+      } else {
+        sampling = SamplingType.Downsample;
+      }
+    }
+    let cubismData = helper(data.series, cubismTimestamps, context, step, sampling);
 
     cubismData = cubismData.filter(function (el) {
       if (el !== null) {
-        return el;
+        return true;
+      } else {
+        return false;
       }
     });
 
