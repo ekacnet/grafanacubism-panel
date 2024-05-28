@@ -1,5 +1,6 @@
 import { D3GraphRender, zoomCallbackGen } from '../components/CubismPanelHelper';
 import { CubismOptions } from '../types';
+import { convertAllDataToCubism } from '../cubism_utils';
 import * as d3 from 'd3';
 import * as cubism from 'cubism-es';
 
@@ -105,6 +106,8 @@ const createMockOptions = (url?: string): CubismOptions => {
     extentMin: 0,
     extentMax: 10,
     automaticExtents: true,
+    automaticSampling: true,
+    sampleType: false,
   };
 };
 
@@ -117,6 +120,7 @@ describe('D3GraphRender', () => {
   let mockPanelDiv: HTMLDivElement;
   let mockTicks: any;
   let mockExtent: any;
+  const oldConsole = global.console.log;
 
   beforeEach(() => {
     mockTicks = jest.fn(() => {
@@ -159,7 +163,14 @@ describe('D3GraphRender', () => {
       ],
       request: { range: { from: 123, to: 456 }, timezone: 'UTC' },
     };
-    mockOptions = { text: 'Hello, World!', automaticExtents: false, extentMin: 0, extentMax: 100 };
+    mockOptions = {
+      text: 'Hello, World!',
+      automaticExtents: false,
+      extentMin: 0,
+      extentMax: 100,
+      automaticSampling: true,
+      sampleType: false,
+    };
     mockStyles = {
       'cubism-panel': 'panel',
       cubismgraph: 'graph',
@@ -179,27 +190,36 @@ describe('D3GraphRender', () => {
     });
 
     // Mock console functions for testing
-    global.console.log = jest.fn();
+    //global.console.log = jest.fn();
   });
 
   afterEach(() => {
+    global.console.log = oldConsole;
     jest.clearAllMocks();
   });
   it('should not render if panelDiv is null or data.series is empty', () => {
-    const renderFn = D3GraphRender(mockContext, getData(86400), mockOptions, mockStyles);
+    const renderFn = D3GraphRender(mockContext, getData(86400), mockOptions, mockStyles, convertAllDataToCubism);
     expect(renderFn(null)).toBeUndefined();
   });
 
   it('should not render graph when data series is empty ', () => {
-    const renderFn = D3GraphRender(mockContext, mockData, mockOptions, mockStyles);
+    const renderFn = D3GraphRender(mockContext, mockData, mockOptions, mockStyles, convertAllDataToCubism);
     expect(renderFn(mockPanelDiv)).toBeUndefined();
   });
-  it('should not render if there is not real data', () => {
+  it('should call convertDataToCubism with Auto', () => {
     let data = getData(86400);
     data.series[0].length = 0;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles);
+    const mockHelper = jest.fn(() => [null]);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockHelper);
     renderFn(mockPanelDiv);
 
+    const calls = mockHelper.mock.calls;
+
+    expect(calls.length).toBe(1);
+    expect(calls[0].at(0)).toBe(data.series);
+    expect(calls[0].at(2)).toStrictEqual(mockContext);
+    expect(calls[0].at(3)).toStrictEqual(288000);
+    expect(calls[0].at(4)).toStrictEqual('auto');
     expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
     expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
     expect(mockContext.axis).not.toHaveBeenCalled();
@@ -207,11 +227,97 @@ describe('D3GraphRender', () => {
     expect(mockContext.rule).not.toHaveBeenCalled();
     expect(mockContext.zoom).not.toHaveBeenCalled();
   });
+  it('should call convertDataToCubism with Auto', () => {
+    let data = getData(86400);
+    data.series[0].length = 0;
+    const mockHelper = jest.fn(() => []);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockHelper);
+    renderFn(mockPanelDiv);
+
+    const calls = mockHelper.mock.calls;
+
+    expect(calls.length).toBe(1);
+    expect(calls[0].at(0)).toBe(data.series);
+    expect(calls[0].at(2)).toStrictEqual(mockContext);
+    expect(calls[0].at(3)).toStrictEqual(288000);
+    expect(calls[0].at(4)).toStrictEqual('auto');
+    expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
+    expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
+    expect(mockContext.axis).not.toHaveBeenCalled();
+    expect(mockContext.horizon).not.toHaveBeenCalled();
+    expect(mockContext.rule).not.toHaveBeenCalled();
+    expect(mockContext.zoom).not.toHaveBeenCalled();
+  });
+  it('should call convertDataToCubism with Upsample', () => {
+    let data = getData(86400);
+    data.series[0].length = 0;
+    const mockHelper = jest.fn(() => []);
+    mockOptions.automaticSampling = false;
+    mockOptions.sampleType = false;
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockHelper);
+    renderFn(mockPanelDiv);
+
+    const calls = mockHelper.mock.calls;
+
+    expect(calls.length).toBe(1);
+    expect(calls[0].at(0)).toBe(data.series);
+    expect(calls[0].at(2)).toStrictEqual(mockContext);
+    expect(calls[0].at(3)).toStrictEqual(288000);
+    expect(calls[0].at(4)).toStrictEqual('upsample');
+    expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
+    expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
+    expect(mockContext.axis).not.toHaveBeenCalled();
+    expect(mockContext.horizon).not.toHaveBeenCalled();
+    expect(mockContext.rule).not.toHaveBeenCalled();
+    expect(mockContext.zoom).not.toHaveBeenCalled();
+  });
+  it('should call convertDataToCubism with Downsample', () => {
+    let data = getData(86400);
+    data.series[0].length = 0;
+    const mockHelper = jest.fn(() => []);
+    mockOptions.automaticSampling = false;
+    mockOptions.sampleType = true;
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockHelper);
+    renderFn(mockPanelDiv);
+
+    const calls = mockHelper.mock.calls;
+
+    expect(calls.length).toBe(1);
+    expect(calls[0].at(0)).toBe(data.series);
+    expect(calls[0].at(2)).toStrictEqual(mockContext);
+    expect(calls[0].at(3)).toStrictEqual(288000);
+    expect(calls[0].at(4)).toStrictEqual('downsample');
+    expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
+    expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
+    expect(mockContext.axis).not.toHaveBeenCalled();
+    expect(mockContext.horizon).not.toHaveBeenCalled();
+    expect(mockContext.rule).not.toHaveBeenCalled();
+    expect(mockContext.zoom).not.toHaveBeenCalled();
+  });
+  it('should not render if there is not real data', () => {
+    const data = getData(86400);
+    data.series = [getValidSerie(width, 1, 86400)];
+    mockOptions.automaticSampling = false;
+    mockOptions.sampleType = false;
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
+    // Create a spy on the function
+
+    renderFn(mockPanelDiv);
+
+    expect(mockPanelDiv.innerHTML).not.toBe('');
+    expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
+    expect(mockContext.axis).toHaveBeenCalled();
+    expect(mockTicks).toHaveBeenCalled();
+    expect(mockTicks).toHaveBeenCalledWith(d3.timeHour, 6);
+    expect(mockContext.horizon).toHaveBeenCalled();
+    expect(mockContext.rule).toHaveBeenCalled();
+    expect(mockContext.zoom).toHaveBeenCalled();
+  });
   it('should render graph and text when panelDiv and data are valid no extent', () => {
     const data = getData(86400);
     data.series = [getValidSerie(width, 1, 86400)];
     mockOptions.automaticExtents = true;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -227,7 +333,7 @@ describe('D3GraphRender', () => {
   it('should render graph and text when panelDiv and data are valid', () => {
     const data = getData(86400);
     data.series = [getValidSerie(width, 1, 86400)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -244,7 +350,7 @@ describe('D3GraphRender', () => {
     let time = 14 * 86400;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -260,7 +366,7 @@ describe('D3GraphRender', () => {
     let time = 14 * 86400 - 1;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -276,7 +382,7 @@ describe('D3GraphRender', () => {
     let time = 86400 / 2 - 1;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -292,7 +398,7 @@ describe('D3GraphRender', () => {
     let time = 86400 - 1;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -307,7 +413,7 @@ describe('D3GraphRender', () => {
   it('should render graph and text when panelDiv and data are valid and called for an hour ', () => {
     const data = getData(3500);
     data.series = [getValidSerie(width, 1, 3500)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');

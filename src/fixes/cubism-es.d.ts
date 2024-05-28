@@ -6,8 +6,11 @@ declare module 'cubism-es' {
     setZoomType(string);
   }
 
+  export type Metric = MetricValue | null;
+  export interface MetricValue {}
+
   export interface Context {
-    metric: any;
+    metric(): () => Metric[];
     rule: any;
     horizon: any;
     on: any;

@@ -9,6 +9,7 @@ import {
   minValue,
   getSerieByName,
 } from '../cubism_utils';
+import { SamplingType } from '../types';
 import _ from 'lodash';
 import { DataFrame, toDataFrame } from '@grafana/data';
 describe('convertDataToCubism', () => {
@@ -31,7 +32,31 @@ describe('convertDataToCubism', () => {
       metric: (callback: any, name: string) => {},
     };
 
-    expect(() => convertDataToCubism(series, seriesIndex, timestamps, context, true)).not.toThrow();
+    expect(() => convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Downsample)).not.toThrow();
+  });
+  it('should throw if called with not up or down', () => {
+    const input1 = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 4],
+        [1000, 10],
+      ],
+    };
+    let series = toDataFrame(input1);
+    const seriesIndex = 0;
+    const timestamps = [1, 2, 4, 6, 7, 10];
+    let values;
+    const context = {
+      metric: (callback: any, name: string) => {
+        callback(1, 20, 1, (a: any, b: any) => {
+          values = b;
+        });
+      },
+    };
+
+    expect(() => convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Auto)).toThrow();
+    expect(values).not.toBeDefined();
   });
   it('should return null if no serie', () => {
     const input1 = {
@@ -50,7 +75,7 @@ describe('convertDataToCubism', () => {
       },
     };
 
-    let v = convertDataToCubism(series, seriesIndex, timestamps, context, false);
+    let v = convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Upsample);
     expect(values).toBe(undefined);
     expect(v).toBe(null);
   });
@@ -75,7 +100,7 @@ describe('convertDataToCubism', () => {
       },
     };
 
-    convertDataToCubism(series, seriesIndex, timestamps, context, false);
+    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Upsample);
     expect(values).toStrictEqual([100, 100, 200, 200, 200, 1000]);
   });
   it('should not extend the data points when downsampling', () => {
@@ -99,7 +124,7 @@ describe('convertDataToCubism', () => {
       },
     };
 
-    convertDataToCubism(series, seriesIndex, timestamps, context, true);
+    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Downsample);
     expect(values).toStrictEqual([100, 100, 200, 200, null, 1000]);
   });
 
@@ -124,10 +149,10 @@ describe('convertDataToCubism', () => {
       },
     };
 
-    convertDataToCubism(series, seriesIndex, timestamps, context, true);
+    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Downsample);
     expect(values).toStrictEqual([100, 200, 1000]);
 
-    convertDataToCubism(series, seriesIndex, timestamps, context, false);
+    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Upsample);
     expect(values).toStrictEqual([100, 200, 1000]);
   });
   it('should return less data points', () => {
@@ -154,7 +179,7 @@ describe('convertDataToCubism', () => {
       },
     };
 
-    convertDataToCubism(series, seriesIndex, timestamps, context, true);
+    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Downsample);
     expect(values).toStrictEqual([150, 400, 700, 1000]);
   });
 });
@@ -506,8 +531,8 @@ describe('downSampleData', () => {
     const context = {
       metric: (callback: any, name: string) => {},
     };
-    expect(() => convertAllDataToCubism([], timestamps, context, 1)).not.toThrow();
-    expect(convertAllDataToCubism([], timestamps, context, 1)).toStrictEqual([null]);
+    expect(() => convertAllDataToCubism([], timestamps, context, 1, SamplingType.Auto)).not.toThrow();
+    expect(convertAllDataToCubism([], timestamps, context, 1, SamplingType.Auto)).toStrictEqual([null]);
   });
   it('should convertAllDataToCubism just work when there is nothing', () => {
     const timestamps = [1, 2, 3, 4];
@@ -525,8 +550,8 @@ describe('downSampleData', () => {
     };
     let series = [toDataFrame(input2)];
     series[0].fields = [];
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
-    expect(convertAllDataToCubism(series, timestamps, context, 1)).toStrictEqual([null]);
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
+    expect(convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).toStrictEqual([null]);
   });
   it('should convertAllDataToCubism just work', () => {
     const input1 = {
@@ -552,7 +577,7 @@ describe('downSampleData', () => {
       metric: (callback: any, name: string) => {},
     };
 
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
   });
   it('should convertAllDataToCubism just work even without a Time field', () => {
     const input1 = {
@@ -567,7 +592,7 @@ describe('downSampleData', () => {
     serie.fields[0].name = 'foo';
     let series = [serie];
     const timestamps = [1, 2, 3, 4];
-    let values;
+    let values, values2;
     const context = {
       metric: (callback: any, name: string) => {
         callback(1, 20, 1, (a: any, b: any) => {
@@ -575,9 +600,18 @@ describe('downSampleData', () => {
         });
       },
     };
+    const context2 = {
+      metric: (callback: any, name: string) => {
+        callback(1, 20, 1, (a: any, b: any) => {
+          values2 = b;
+        });
+      },
+    };
 
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
+    expect(() => convertAllDataToCubism(series, timestamps, context2, 1, SamplingType.Upsample)).not.toThrow();
     expect(values).toStrictEqual([100, 200, 300, 300]);
+    expect(values).toStrictEqual(values2);
   });
   it('should convertAllDataToCubism not add points if there is too much blanks', () => {
     const input1 = {
@@ -602,7 +636,7 @@ describe('downSampleData', () => {
       },
     };
 
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
     expect(values).toStrictEqual([100, 100, 100, null, 200, 200, null, null, null, 300]);
   });
 
@@ -620,7 +654,7 @@ describe('downSampleData', () => {
     let serie = toDataFrame(input1);
     let series = [serie];
     const timestamps = [1, 3, 5];
-    let values;
+    let values, values2;
     const context = {
       metric: (callback: any, name: string) => {
         callback(1, 20, 1, (a: any, b: any) => {
@@ -629,8 +663,16 @@ describe('downSampleData', () => {
       },
     };
 
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
-    expect(values).toStrictEqual([150, 350, 500]);
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
+    const context2 = {
+      metric: (callback: any, name: string) => {
+        callback(1, 20, 1, (a: any, b: any) => {
+          values2 = b;
+        });
+      },
+    };
+    expect(() => convertAllDataToCubism(series, timestamps, context2, 1, SamplingType.Downsample)).not.toThrow();
+    expect(values).toStrictEqual(values2);
   });
 });
 describe('getSerieByName', () => {
