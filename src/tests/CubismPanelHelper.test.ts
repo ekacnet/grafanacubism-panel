@@ -106,8 +106,6 @@ const createMockOptions = (url?: string): CubismOptions => {
     extentMin: 0,
     extentMax: 10,
     automaticExtents: true,
-    automaticSampling: true,
-    sampleType: false,
   };
 };
 
@@ -219,7 +217,6 @@ describe('D3GraphRender', () => {
     expect(calls[0].at(0)).toBe(data.series);
     expect(calls[0].at(2)).toStrictEqual(mockContext);
     expect(calls[0].at(3)).toStrictEqual(288000);
-    expect(calls[0].at(4)).toStrictEqual('auto');
     expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
     expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
     expect(mockContext.axis).not.toHaveBeenCalled();
@@ -240,7 +237,6 @@ describe('D3GraphRender', () => {
     expect(calls[0].at(0)).toBe(data.series);
     expect(calls[0].at(2)).toStrictEqual(mockContext);
     expect(calls[0].at(3)).toStrictEqual(288000);
-    expect(calls[0].at(4)).toStrictEqual('auto');
     expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
     expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
     expect(mockContext.axis).not.toHaveBeenCalled();
@@ -263,7 +259,6 @@ describe('D3GraphRender', () => {
     expect(calls[0].at(0)).toBe(data.series);
     expect(calls[0].at(2)).toStrictEqual(mockContext);
     expect(calls[0].at(3)).toStrictEqual(288000);
-    expect(calls[0].at(4)).toStrictEqual('upsample');
     expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
     expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
     expect(mockContext.axis).not.toHaveBeenCalled();
@@ -286,7 +281,6 @@ describe('D3GraphRender', () => {
     expect(calls[0].at(0)).toBe(data.series);
     expect(calls[0].at(2)).toStrictEqual(mockContext);
     expect(calls[0].at(3)).toStrictEqual(288000);
-    expect(calls[0].at(4)).toStrictEqual('downsample');
     expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
     expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
     expect(mockContext.axis).not.toHaveBeenCalled();

@@ -1,28 +1,6 @@
 import { DataFrame, getFieldDisplayName } from '@grafana/data';
-import { SamplingType } from 'types';
-import { log_debug } from './misc_utils';
 import * as cubism from 'cubism-es';
 import _ from 'lodash';
-
-// Take the datapoints of the timeseries and its associated timestamps
-export function upSampleData(dataPoints: number[], dataPointsTS: number[]) {
-  let pointIndex = 0;
-  return function (ts: number, tsIndex: number) {
-    let point = dataPoints[pointIndex];
-    let nextPoint = null;
-    let nextPointTS = null;
-    if (pointIndex + 1 < dataPoints.length) {
-      nextPoint = dataPoints[pointIndex + 1];
-      nextPointTS = dataPointsTS[pointIndex + 1];
-    }
-    if (nextPointTS == null || ts < nextPointTS) {
-      return point;
-    } else {
-      pointIndex++;
-      return nextPoint!;
-    }
-  };
-}
 
 function linearExtrapolation(point1: number[], point2: number[], ts: number): number {
   let slope = (point2[1] - point1[1]) / (point2[0] - point1[0]);
@@ -150,10 +128,9 @@ export function convertDataToCubism(
   serie: DataFrame,
   serieIndex: number,
   timestamps: number[],
-  context: any,
-  samplingType: SamplingType
+  context: any
 ): cubism.Metric | null {
-  if (serie.length > 0) {
+  if (serie.length > 0 && serie.fields.length > 1) {
     //TODO fix for series with more than one value
     let name = getFieldDisplayName(serie.fields[1], serie);
     return context.metric(function (start: number, stop: number, step: number, callback: any) {
@@ -162,15 +139,9 @@ export function convertDataToCubism(
       let values: Array<number | null> = [];
       let override = { summaryType: 'avg' };
       let dataAndTS = dataPointsTS.map((item, index) => [item, dataPoints[index]]);
-      if (samplingType === SamplingType.Downsample) {
-        values = _.chain(timestamps)
-          .map(genGrafanaMetric(timestamps, dataAndTS, override, serie.fields[0].config.interval!))
-          .value();
-      } else if (samplingType === SamplingType.Upsample) {
-        values = _.chain(timestamps).map(upSampleData(dataPoints, dataPointsTS)).value();
-      } else {
-        throw new Error(`SamplingType ${samplingType} is not allowed for convertDataToCubism`);
-      }
+      values = _.chain(timestamps)
+        .map(genGrafanaMetric(timestamps, dataAndTS, override, serie.fields[0].config.interval!))
+        .value();
       callback(null, values);
     }, name);
   } else {
@@ -182,71 +153,14 @@ export function convertAllDataToCubism(
   series: DataFrame[],
   cubismTimestamps: number[],
   context: any,
-  step: number,
-  samplingType: SamplingType
+  step: number
 ): cubism.Metric[] {
   if (series.length === 0) {
     return [null];
   }
-  let longest = series[0].length;
-  let longestIndex = 0;
-
-  for (let i = 1; i < series.length; i++) {
-    if (series[i].length > longest) {
-      longest = series[i].length;
-      longestIndex = i;
-    }
-  }
-  // Let's look at the longest one, if the step is bigger than what we have in the serie we downsample
-  const name = 'Time';
-  let s = series[longestIndex];
-  let ts = s.fields.filter(function (v) {
-    return v.name === name ? true : false;
-  })[0];
-  let previousts = -1;
-  let v: number[] = [];
-  if (ts === undefined) {
-    log_debug(`Couldn't find a field with name ${name} using field 0`);
-    if (s.fields.length > 0) {
-      ts = s.fields[0];
-    } else {
-      return series.map(function (serie, serieIndex) {
-        return null;
-      });
-    }
-  }
-  log_debug(`There is ${ts.values.length} elements in the longest`);
-  for (let i = 0; i < ts.values.length; i++) {
-    if (previousts !== -1) {
-      v.push(ts.values[i] - previousts);
-    }
-    previousts = ts.values[i];
-  }
-  v.sort((a: number, b: number) => a - b);
-
-  // Calculate the index for P99
-  const index = Math.ceil(0.99 * v.length) - 1;
-  // Look at what is the ratio when comparing the smallest step (ie. when we have most of the data
-  // to the largest (ie. when there is gaps), if the ratio is more than 3 we will
-  // downsample because it means that there is massive gaps
-  const stepRatio = v[index] / v[0];
-
-  if (samplingType === SamplingType.Auto) {
-    // if there is too much missing points (ie. p99 has has at least 3x the smallest step then force
-    // downsample because upSample will not give good results
-    if (stepRatio > 3 || s.fields[0].values.length > cubismTimestamps.length) {
-      samplingType = SamplingType.Downsample;
-    } else {
-      samplingType = SamplingType.Upsample;
-    }
-  }
-
-  log_debug(
-    `sampling = ${samplingType} v[index] = ${v[index]} stepRatio = ${stepRatio} index = ${index}, step = ${step}`
-  );
 
   return series.map(function (serie, serieIndex) {
-    const fnc = convertDataToCubism(serie, serieIndex, cubismTimestamps, context, samplingType);
+    const fnc = convertDataToCubism(serie, serieIndex, cubismTimestamps, context);
     return fnc;
   });
 }
