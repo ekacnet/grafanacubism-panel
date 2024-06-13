@@ -2,7 +2,7 @@ import {
   convertDataToCubism,
   convertAllDataToCubism,
   upSampleData,
-  downSampleData,
+  genGrafanaMetric,
   sumValues,
   averageValues,
   maxValue,
@@ -16,7 +16,6 @@ describe('convertDataToCubism', () => {
   it('should be defined', () => {
     expect(convertDataToCubism).toBeDefined();
   });
-
   it('should be callable with valid arguments', () => {
     const input1 = {
       target: 'Field Name',
@@ -125,7 +124,7 @@ describe('convertDataToCubism', () => {
     };
 
     convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Downsample);
-    expect(values).toStrictEqual([100, 100, 200, 200, null, 1000]);
+    expect(values).toStrictEqual([100, null, 200, null, null, 1000]);
   });
 
   it('should return the same number of data points', () => {
@@ -324,7 +323,7 @@ describe('testsumValue', () => {
   });
 });
 
-describe('downSampleData', () => {
+describe('genGrafanaMetric', () => {
   it('should return sum of values when summaryType is sum', () => {
     const timestamps = [1, 2, 4];
     const dataAndTS = [
@@ -335,7 +334,7 @@ describe('downSampleData', () => {
     ];
     const override = { summaryType: 'sum' };
 
-    const result = downSampleData(timestamps, dataAndTS, override);
+    const result = genGrafanaMetric(timestamps, dataAndTS, override, 1);
 
     expect(result(1, 0)).toEqual(10);
     expect(result(2, 1)).toEqual(50);
@@ -352,7 +351,7 @@ describe('downSampleData', () => {
     ];
     const override = { summaryType: 'min' };
 
-    const result = downSampleData(timestamps, dataAndTS, override);
+    const result = genGrafanaMetric(timestamps, dataAndTS, override, 1);
 
     expect(result(1, 0)).toEqual(10);
     expect(result(2, 1)).toEqual(20);
@@ -368,7 +367,7 @@ describe('downSampleData', () => {
     ];
     const override = { summaryType: 'max' };
 
-    const result = downSampleData(timestamps, dataAndTS, override);
+    const result = genGrafanaMetric(timestamps, dataAndTS, override, 1);
 
     expect(result(1, 0)).toEqual(10);
     expect(result(2, 1)).toEqual(30);
@@ -385,7 +384,7 @@ describe('downSampleData', () => {
     ];
     const override = { summaryType: 'avg' };
 
-    const result = downSampleData(timestamps, dataAndTS, override);
+    const result = genGrafanaMetric(timestamps, dataAndTS, override, 1);
 
     expect(result(1, 0)).toEqual(10);
     expect(result(2, 1)).toEqual(25);
@@ -402,7 +401,7 @@ describe('downSampleData', () => {
     ];
     const override = { summaryType: 'avg' };
 
-    let values = _.chain(timestamps).map(downSampleData(timestamps, dataAndTS, override)).value();
+    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, dataAndTS, override, 1)).value();
     expect(values.length).toBe(3);
     expect(values).toStrictEqual([10, 25, 40]);
   });
@@ -416,7 +415,7 @@ describe('downSampleData', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let fn = downSampleData(dataPointsTS, val, override);
+    let fn = genGrafanaMetric(dataPointsTS, val, override, 1000);
     const result = fn(1000, 0);
     expect(result).toBe(dataPoints[0]);
   });
@@ -431,9 +430,11 @@ describe('downSampleData', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let fn = downSampleData(dataPointsTS, val, override);
-    const result = fn(2000, 1);
+    let fn = genGrafanaMetric(dataPointsTS, val, override, 1000);
+    let result = fn(2000, 1);
     expect(result).toBe(dataPoints[1]);
+    result = fn(1000, 0);
+    expect(result).toBe(dataPoints[0]);
   });
 
   it('should return the last point when there is no next point', () => {
@@ -446,7 +447,7 @@ describe('downSampleData', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let fn = downSampleData([1000, 2000, 3000, 4000], val, override);
+    let fn = genGrafanaMetric([1000, 2000, 3000, 4000], val, override, 1000);
     const result = fn(4000, 3);
     expect(result).toBe(null);
   });
@@ -462,9 +463,9 @@ describe('downSampleData', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(downSampleData(timestamps, val, override)).value();
+    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 1000)).value();
     expect(values.length).toBe(5);
-    expect(values).toStrictEqual([1, 2, 2, null, 3]);
+    expect(values).toStrictEqual([1, 2, null, null, 3]);
   });
   it('should set values to null before and after', () => {
     const dataPoints = [1, 2, 3];
@@ -477,9 +478,9 @@ describe('downSampleData', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(downSampleData(timestamps, val, override)).value();
+    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 10)).value();
     expect(values.length).toBe(timestamps.length);
-    expect(values).toStrictEqual([null, null, null, 1, 2, 3, 3, null, null, null, null, null, null, null]);
+    expect(values).toStrictEqual([null, null, null, 1, 2, 3, null, null, null, null, null, null, null, null]);
   });
   it('should not extend the last value after the end', () => {
     const dataPoints = [1, 2, 3];
@@ -492,9 +493,71 @@ describe('downSampleData', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(downSampleData(timestamps, val, override)).value();
+    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 10)).value();
     expect(values.length).toBe(timestamps.length);
     expect(values).toStrictEqual([null, null, null, 1, 2, 3, null]);
+  });
+  it('should generate data points as long as they are spaced tsInterval away', () => {
+    const dataPoints = [1, 10, 200];
+    const dataPointsTS = [90, 101, 200];
+    const timestamps = [70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210];
+    let val: number[][] = [];
+    const override = { summaryType: 'sum' };
+
+    for (let i = 0; i < dataPoints.length; i++) {
+      val.push([dataPointsTS[i], dataPoints[i]]);
+    }
+
+    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 100)).value();
+    expect(values.length).toBe(timestamps.length);
+    expect(values).toStrictEqual([
+      null,
+      null,
+      1,
+      10,
+      27.27272727272728,
+      46.46464646464645,
+      65.65656565656565,
+      84.84848484848482,
+      104.04040404040404,
+      123.23232323232321,
+      142.42424242424244,
+      161.6161616161616,
+      180.80808080808077,
+      200,
+      219.19191919191917,
+    ]);
+  });
+  it('should generate data points as long as they are spaced tsInterval away apart for far away end data points', () => {
+    const dataPoints = [1, 10, 200];
+    const dataPointsTS = [90, 101, 200];
+    const timestamps = [70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 300];
+    let val: number[][] = [];
+    const override = { summaryType: 'sum' };
+
+    for (let i = 0; i < dataPoints.length; i++) {
+      val.push([dataPointsTS[i], dataPoints[i]]);
+    }
+
+    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 100)).value();
+    expect(values.length).toBe(timestamps.length);
+    expect(values).toStrictEqual([
+      null,
+      null,
+      1,
+      10,
+      27.27272727272728,
+      46.46464646464645,
+      65.65656565656565,
+      84.84848484848482,
+      104.04040404040404,
+      123.23232323232321,
+      142.42424242424244,
+      161.6161616161616,
+      180.80808080808077,
+      200,
+      null,
+    ]);
   });
   it('should set values to 0 before and after add missing a bit even when not aligned', () => {
     const dataPoints = [1, 2, 3];
@@ -507,9 +570,9 @@ describe('downSampleData', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(downSampleData(timestamps, val, override)).value();
+    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 10)).value();
     expect(values.length).toBe(timestamps.length);
-    expect(values).toStrictEqual([null, null, null, 1, 2, 2, 3, 3, null, null, null, null, null, null]);
+    expect(values).toStrictEqual([null, null, null, 1, 2, null, 3, null, null, null, null, null, null, null]);
   });
   it('should not extend when the gap is too big', () => {
     const dataPoints = [1, 2, 3, 4];
@@ -522,9 +585,9 @@ describe('downSampleData', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(downSampleData(timestamps, val, override)).value();
+    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 10)).value();
     expect(values.length).toBe(timestamps.length);
-    expect(values).toStrictEqual([null, null, null, 1, 2, 2, null, null, null, null, 3.5, 3.5, null, null]);
+    expect(values).toStrictEqual([null, null, null, 1, 2, null, null, null, null, null, 3.5, null, null, null]);
   });
   it('should convertAllDataToCubism just work when there is nothing', () => {
     const timestamps = [1, 2, 3, 4];
@@ -637,7 +700,7 @@ describe('downSampleData', () => {
     };
 
     expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
-    expect(values).toStrictEqual([100, 100, 100, null, 200, 200, null, null, null, 300]);
+    expect(values).toStrictEqual([100, 100, null, null, 200, null, null, null, null, 300]);
   });
 
   it('should convertAllDataToCubism with a larger timeserie', () => {
