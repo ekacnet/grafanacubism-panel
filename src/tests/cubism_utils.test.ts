@@ -1,7 +1,6 @@
 import {
   convertDataToCubism,
   convertAllDataToCubism,
-  upSampleData,
   genGrafanaMetric,
   sumValues,
   averageValues,
@@ -9,9 +8,9 @@ import {
   minValue,
   getSerieByName,
 } from '../cubism_utils';
-import { SamplingType } from '../types';
+import { toDataFrame, DataFrame } from '@grafana/data';
 import _ from 'lodash';
-import { DataFrame, toDataFrame } from '@grafana/data';
+
 describe('convertDataToCubism', () => {
   it('should be defined', () => {
     expect(convertDataToCubism).toBeDefined();
@@ -31,31 +30,7 @@ describe('convertDataToCubism', () => {
       metric: (callback: any, name: string) => {},
     };
 
-    expect(() => convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Downsample)).not.toThrow();
-  });
-  it('should throw if called with not up or down', () => {
-    const input1 = {
-      target: 'Field Name',
-      datapoints: [
-        [100, 1],
-        [200, 4],
-        [1000, 10],
-      ],
-    };
-    let series = toDataFrame(input1);
-    const seriesIndex = 0;
-    const timestamps = [1, 2, 4, 6, 7, 10];
-    let values;
-    const context = {
-      metric: (callback: any, name: string) => {
-        callback(1, 20, 1, (a: any, b: any) => {
-          values = b;
-        });
-      },
-    };
-
-    expect(() => convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Auto)).toThrow();
-    expect(values).not.toBeDefined();
+    expect(() => convertDataToCubism(series, seriesIndex, timestamps, context)).not.toThrow();
   });
   it('should return null if no serie', () => {
     const input1 = {
@@ -74,33 +49,9 @@ describe('convertDataToCubism', () => {
       },
     };
 
-    let v = convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Upsample);
+    let v = convertDataToCubism(series, seriesIndex, timestamps, context);
     expect(values).toBe(undefined);
     expect(v).toBe(null);
-  });
-  it('should extend the data points when upsampling', () => {
-    const input1 = {
-      target: 'Field Name',
-      datapoints: [
-        [100, 1],
-        [200, 4],
-        [1000, 10],
-      ],
-    };
-    let series = toDataFrame(input1);
-    const seriesIndex = 0;
-    const timestamps = [1, 2, 4, 6, 7, 10];
-    let values;
-    const context = {
-      metric: (callback: any, name: string) => {
-        callback(1, 20, 1, (a: any, b: any) => {
-          values = b;
-        });
-      },
-    };
-
-    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Upsample);
-    expect(values).toStrictEqual([100, 100, 200, 200, 200, 1000]);
   });
   it('should not extend the data points when downsampling', () => {
     const input1 = {
@@ -123,7 +74,7 @@ describe('convertDataToCubism', () => {
       },
     };
 
-    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Downsample);
+    convertDataToCubism(series, seriesIndex, timestamps, context);
     expect(values).toStrictEqual([100, null, 200, null, null, 1000]);
   });
 
@@ -148,10 +99,10 @@ describe('convertDataToCubism', () => {
       },
     };
 
-    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Downsample);
+    convertDataToCubism(series, seriesIndex, timestamps, context);
     expect(values).toStrictEqual([100, 200, 1000]);
 
-    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Upsample);
+    convertDataToCubism(series, seriesIndex, timestamps, context);
     expect(values).toStrictEqual([100, 200, 1000]);
   });
   it('should return less data points', () => {
@@ -178,60 +129,8 @@ describe('convertDataToCubism', () => {
       },
     };
 
-    convertDataToCubism(series, seriesIndex, timestamps, context, SamplingType.Downsample);
+    convertDataToCubism(series, seriesIndex, timestamps, context);
     expect(values).toStrictEqual([150, 400, 700, 1000]);
-  });
-});
-
-describe('upSampleData', () => {
-  it('should return a function', () => {
-    const result = upSampleData([1, 2, 3], [1000, 2000, 3000]);
-    expect(typeof result).toBe('function');
-  });
-
-  it('should return the correct point when ts is less than nextPointTS', () => {
-    const dataPoints = [1, 2, 3];
-    const dataPointsTS = [1000, 2000, 3000];
-    const pointIndex = 0;
-    const fn = upSampleData(dataPoints, dataPointsTS);
-    const result = fn(1500, 0);
-    expect(result).toBe(dataPoints[pointIndex]);
-  });
-
-  it('should return the next point when ts is greater than or equal to nextPointTS', () => {
-    const dataPoints = [1, 2, 3];
-    const dataPointsTS = [1000, 2000, 3000];
-    const pointIndex = 0;
-    const fn = upSampleData(dataPoints, dataPointsTS);
-    const result = fn(2000, 0);
-    expect(result).toBe(dataPoints[pointIndex + 1]);
-  });
-
-  it('should return the last point when there is no next point', () => {
-    const dataPoints = [1, 2, 3];
-    const dataPointsTS = [1000, 2000, 3000];
-    const fn = upSampleData(dataPoints, dataPointsTS);
-    fn(2000, 1);
-    fn(3000, 2);
-    let result = fn(4000, 3);
-    expect(result).toBe(3);
-  });
-
-  it('should return a 4 elements array with the right values when called in map()', () => {
-    const dataPoints = [1, 2, 3];
-    const dataPointsTS = [1000, 2000, 4000];
-    const timestamps = [1000, 2000, 3000, 4000];
-    let values = _.chain(timestamps).map(upSampleData(dataPoints, dataPointsTS)).value();
-    expect(values.length).toBe(4);
-    expect(values).toStrictEqual([1, 2, 2, 3]);
-  });
-  it('should set values to 0 before and after', () => {
-    const dataPoints = [1, 2, 3];
-    const dataPointsTS = [100, 110, 120];
-    const timestamps = [70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
-    let values = _.chain(timestamps).map(upSampleData(dataPoints, dataPointsTS)).value();
-    expect(values.length).toBe(timestamps.length);
-    expect(values).toStrictEqual([1, 1, 1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3]);
   });
 });
 
@@ -594,8 +493,8 @@ describe('genGrafanaMetric', () => {
     const context = {
       metric: (callback: any, name: string) => {},
     };
-    expect(() => convertAllDataToCubism([], timestamps, context, 1, SamplingType.Auto)).not.toThrow();
-    expect(convertAllDataToCubism([], timestamps, context, 1, SamplingType.Auto)).toStrictEqual([null]);
+    expect(() => convertAllDataToCubism([], timestamps, context, 1)).not.toThrow();
+    expect(convertAllDataToCubism([], timestamps, context, 1)).toStrictEqual([null]);
   });
   it('should convertAllDataToCubism just work when there is nothing', () => {
     const timestamps = [1, 2, 3, 4];
@@ -613,8 +512,8 @@ describe('genGrafanaMetric', () => {
     };
     let series = [toDataFrame(input2)];
     series[0].fields = [];
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
-    expect(convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).toStrictEqual([null]);
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
+    expect(convertAllDataToCubism(series, timestamps, context, 1)).toStrictEqual([null]);
   });
   it('should convertAllDataToCubism just work', () => {
     const input1 = {
@@ -640,7 +539,7 @@ describe('genGrafanaMetric', () => {
       metric: (callback: any, name: string) => {},
     };
 
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
   });
   it('should convertAllDataToCubism just work even without a Time field', () => {
     const input1 = {
@@ -671,9 +570,9 @@ describe('genGrafanaMetric', () => {
       },
     };
 
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
-    expect(() => convertAllDataToCubism(series, timestamps, context2, 1, SamplingType.Upsample)).not.toThrow();
-    expect(values).toStrictEqual([100, 200, 300, 300]);
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
+    expect(() => convertAllDataToCubism(series, timestamps, context2, 1)).not.toThrow();
+    expect(values).toStrictEqual([100, 200, 300, null]);
     expect(values).toStrictEqual(values2);
   });
   it('should convertAllDataToCubism not add points if there is too much blanks', () => {
@@ -699,7 +598,7 @@ describe('genGrafanaMetric', () => {
       },
     };
 
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
     expect(values).toStrictEqual([100, 100, null, null, 200, null, null, null, null, 300]);
   });
 
@@ -726,7 +625,7 @@ describe('genGrafanaMetric', () => {
       },
     };
 
-    expect(() => convertAllDataToCubism(series, timestamps, context, 1, SamplingType.Auto)).not.toThrow();
+    expect(() => convertAllDataToCubism(series, timestamps, context, 1)).not.toThrow();
     const context2 = {
       metric: (callback: any, name: string) => {
         callback(1, 20, 1, (a: any, b: any) => {
@@ -734,7 +633,7 @@ describe('genGrafanaMetric', () => {
         });
       },
     };
-    expect(() => convertAllDataToCubism(series, timestamps, context2, 1, SamplingType.Downsample)).not.toThrow();
+    expect(() => convertAllDataToCubism(series, timestamps, context2, 1)).not.toThrow();
     expect(values).toStrictEqual(values2);
   });
 });

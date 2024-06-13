@@ -13,18 +13,6 @@ export const plugin = new PanelPlugin<CubismOptions>(CubismPanel).setPanelOption
       editor: DataLinksEditor,
     })
     .addBooleanSwitch({
-      path: 'automaticSampling',
-      name: 'Let cubism decide which kind of sampling to do',
-      defaultValue: true,
-    })
-    .addBooleanSwitch({
-      path: 'sampleType',
-      name: 'Up/Down sample data',
-      defaultValue: true,
-      description: 'Select between upsample or downsample (true for downSample)',
-      showIf: (config) => config.automaticSampling === false,
-    })
-    .addBooleanSwitch({
       path: 'automaticExtents',
       name: 'Let cubism calculate the extent automatically',
       defaultValue: true,

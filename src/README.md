@@ -30,15 +30,6 @@ And you should get a cubism graph.
 
 The plugin support the following settings
 
-### Automatic sampling type
-The plugin tries very hard to figure out if upsampling, aka generating datapoints that don't exists, is needed or downsampling is needed (ie. there is too many points and so it needsto average the different values). By default it's enabled but if you want more control on a given graph on how the sampling is done feel free to change it to off.
-
-### Upsample or downsample datapoints
-If the previous setting is disabled, you will have a choice to either upsample (not enabled) or downsample (enabled) the data. Upsampling is useful if you try to zoom heavily on a graph and there is not enough datapoints to render a datapoint for each pixel of the graph, in this case it will generate intermediate datapoints.
-The main issue with upsampling is that if there is large gaps before, after or within the metric you will have fake datapoints and see a "smear" like visual artifact.
-
-Downsample is usually a safe choice but could lead to unpleasant visual graph if the resolution of the metric is not enough for the graph. In an extreme situation where the graph is 600px large for 5 minutes, each pixel represent 0.5s and if the metric has a resolution of 15s (ie. one datapoint every 15s) there will be 29 dark pixel between each point.
-
 ### Let Cubism calculate the extents automatically
 Extents (maximum and minimum) correspond to the highest (respectively lowest) value associated with the darkest color, then the range between 0 and this value is divided in 5 bands each associated with a progressively darker color.
 By default cubism figures out the highest (resp. lowest) value in each serie if this setting is enabled.

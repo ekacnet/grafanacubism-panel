@@ -11,7 +11,5 @@ export interface CubismOptions {
   extentMin: number;
   extentMax: number;
   automaticExtents: boolean;
-  automaticSampling: boolean;
-  sampleType: boolean;
   links: DashboardLink[];
 }
