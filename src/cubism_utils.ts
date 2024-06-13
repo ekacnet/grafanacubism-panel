@@ -24,45 +24,72 @@ export function upSampleData(dataPoints: number[], dataPointsTS: number[]) {
   };
 }
 
-export function downSampleData(timestamps: number[], dataAndTS: number[][], override: { summaryType: string }) {
+function linearExtrapolation(point1: number[], point2: number[], ts: number): number {
+  let slope = (point2[1] - point1[1]) / (point2[0] - point1[0]);
+  // a.x + b = y
+  let offset = point2[1] - slope * point2[0];
+
+  return offset + slope * ts;
+}
+
+export function genGrafanaMetric(
+  grafanaTS: number[],
+  dataAndTS: number[][],
+  rangeFunction: { summaryType: string },
+  tsInterval: number
+): (ts: number, tsIndex: number) => number | null {
   let val = 0;
-  return function (ts: number, tsIndex: number) {
+  return function (ts: number, tsIndex: number): number | null {
     let nextTs: null | number = null;
-    if (tsIndex + 1 < timestamps.length) {
-      nextTs = timestamps[tsIndex + 1];
+    let values = [];
+    let cur_cb_ix = 0;
+    if (tsIndex + 1 < grafanaTS.length) {
+      nextTs = grafanaTS[tsIndex + 1];
     }
-    let values = dataAndTS
-      .filter(function (point) {
-        return point[0] >= ts && (nextTs == null || point[0] < nextTs);
-      })
-      .map(function (point) {
-        return point[1];
-      });
+    const lastTs = grafanaTS[grafanaTS.length - 1];
+    while (nextTs == null || dataAndTS[cur_cb_ix][0] < nextTs) {
+      if (dataAndTS[cur_cb_ix][0] >= ts) {
+        values.push(dataAndTS[cur_cb_ix][1]);
+      }
+      if (cur_cb_ix < dataAndTS.length - 1) {
+        cur_cb_ix++;
+      } else {
+        break;
+      }
+    }
+
+    if (values.length === 0 && dataAndTS.length > 1) {
+      if (cur_cb_ix < dataAndTS.length && cur_cb_ix > 0 && dataAndTS[cur_cb_ix][0] > ts) {
+        // If we don't have any values for the ts where we are trying to display
+        // we check if the next data point that we have is tsInterval away from the last one (tsInterval
+        //  is the interval in ms specified in our data source, aka how often we should
+        //  have a data point if there is one).
+        //  cur_cb_ix is pointing to the next data point to be evaluated
+        if (dataAndTS[cur_cb_ix][0] - dataAndTS[cur_cb_ix - 1][0] <= tsInterval) {
+          values.push(linearExtrapolation(dataAndTS[cur_cb_ix], dataAndTS[cur_cb_ix - 1], ts));
+          //values.push(dataAndTS[tmp_ix][1]);
+          /*} else {
+          console.log(dataAndTS[tmp_ix + 1][0] - dataAndTS[tmp_ix][0]);
+          console.log(new Date(ts));
+        */
+        }
+      } else if (
+        cur_cb_ix === dataAndTS.length - 1 &&
+        dataAndTS[cur_cb_ix][0] < ts &&
+        lastTs - dataAndTS[cur_cb_ix][0] < tsInterval
+      ) {
+        values.push(linearExtrapolation(dataAndTS[cur_cb_ix], dataAndTS[cur_cb_ix - 1], ts));
+      }
+    }
 
     if (values.length === 0) {
-      if (tsIndex === 0 || nextTs === null) {
-        return null;
-      }
-      // Potentially extrapolate some points but it's not clear why we should do that
-      let lastTS = timestamps[tsIndex - 1];
-      values = dataAndTS
-        .filter(function (point) {
-          return point[0] >= lastTS && point[0] < ts;
-        })
-        .map(function (point) {
-          return point[1];
-        });
-
-      if (values.length === 0) {
-        return null;
-      }
+      return null;
     }
-
-    if (override.summaryType === 'sum') {
+    if (rangeFunction.summaryType === 'sum') {
       val = sumValues(values);
-    } else if (override.summaryType === 'min') {
+    } else if (rangeFunction.summaryType === 'min') {
       val = minValue(values);
-    } else if (override.summaryType === 'max') {
+    } else if (rangeFunction.summaryType === 'max') {
       val = maxValue(values);
     } else {
       val = averageValues(values);
@@ -136,7 +163,9 @@ export function convertDataToCubism(
       let override = { summaryType: 'avg' };
       let dataAndTS = dataPointsTS.map((item, index) => [item, dataPoints[index]]);
       if (samplingType === SamplingType.Downsample) {
-        values = _.chain(timestamps).map(downSampleData(timestamps, dataAndTS, override)).value();
+        values = _.chain(timestamps)
+          .map(genGrafanaMetric(timestamps, dataAndTS, override, serie.fields[0].config.interval!))
+          .value();
       } else if (samplingType === SamplingType.Upsample) {
         values = _.chain(timestamps).map(upSampleData(dataPoints, dataPointsTS)).value();
       } else {
