@@ -23,6 +23,7 @@ declare module 'cubism-es' {
     zoom(f?: zoomCallback): ZoomContext;
     setCSSClass(string, string);
     getCSSClass(string): string;
+    focus(number);
     _scale: d3.scale;
   }
 
