@@ -2,7 +2,7 @@ import { CubismOptions } from 'types';
 import * as cubism from 'cubism-es';
 import * as d3 from 'd3';
 
-import { PanelData, DataFrame } from '@grafana/data';
+import { DataHoverEvent, EventBus, PanelData, DataFrame } from '@grafana/data';
 import { getSerieByName, convertAllDataToCubism } from '../cubism_utils';
 import { log_debug } from '../misc_utils';
 import { calculateSecondOffset } from '../date_utils';
@@ -18,6 +18,7 @@ export const D3GraphRender = (
   data: PanelData,
   options: CubismOptions,
   styles: CSSStyles,
+  eventBus: EventBus,
   convertDatahelper: (d: DataFrame[], n: number[], o: any, z: number) => cubism.Metric[] = convertAllDataToCubism
 ): ((wrapperDiv: HTMLDivElement | null) => void) => {
   return (panelDiv: HTMLDivElement | null) => {
@@ -168,6 +169,14 @@ export const D3GraphRender = (
       if (i === null) {
         canvasDiv.selectAll('.value').style('right', null);
       } else {
+        let val = context._scale.invert(i);
+        eventBus.publish(
+          new DataHoverEvent({
+            point: {
+              time: val,
+            },
+          })
+        );
         const rightStyle: string = context.size() - i + 'px';
         canvasDiv.selectAll('.value').style('right', rightStyle);
       }

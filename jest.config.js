@@ -11,6 +11,7 @@ let ignoredModules = [nodeModulesToTransform(ESModules)];
 exports = {
   // Jest configuration provided by Grafana scaffolding
   ...require('./.config/jest.config'),
+  setupFiles: ['jest-canvas-mock'],
   coverageDirectory: 'coverage/jest',
   globals: {
     'ts-jest': {

@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import { PanelProps, PanelData, GrafanaTheme2 } from '@grafana/data';
+import { DataHoverEvent, PanelProps, PanelData, GrafanaTheme2, EventBus } from '@grafana/data';
 import { CubismOptions } from 'types';
 import { css } from '@emotion/css';
 import {  useStyles2, useTheme2 } from '@grafana/ui';
@@ -163,12 +163,21 @@ const getStyles = (showText: boolean, theme: GrafanaTheme2): StylesGetter => {
   };
 };
 
+export const adjustCubismCrossHair = (context: cubism.Context, hoverEventData: DataHoverEvent) => {
+  if (hoverEventData.payload!.data) {
+    let ts = hoverEventData.payload.data.fields[0].values[hoverEventData.payload.rowIndex!];
+    let index = context._scale(new Date(ts))
+    context.focus(Math.floor(index))
+  }
+}
+
 export const D3Graph: React.FC<{
   height: number;
   width: number;
   data: PanelData;
   options: CubismOptions;
-}> = ({ height, width, data, options }) => {
+  eventBus: EventBus;
+}> = ({ height, width, data, options, eventBus }) => {
   let context = cubism.context();
   let showText = false;
   if (options.text !== undefined && options.text !== null && options.text !== '') {
@@ -179,20 +188,25 @@ export const D3Graph: React.FC<{
   // useState() ...
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const renderD3 = React.useCallback(
-     D3GraphRender(context, data, options, styles)
+     D3GraphRender(context, data,  options, styles, eventBus)
     , [context, data, options, styles]
   )
   useEffect(() => {
+    // Like componentDidMount()
+    let subscribe = eventBus.getStream(DataHoverEvent).subscribe((data)=>{
+      adjustCubismCrossHair(context, data);
+     });
     return () => {
-      context.stop()
+      context.stop();
+      subscribe.unsubscribe();
     };
   });
   return <div
     ref={renderD3} />;
 };
 
-export const CubismPanel: React.FC<Props> = ({ options, data, width, height }) => {
+export const CubismPanel: React.FC<Props> = ({ options, data, width, height, eventBus }) => {
   return (
-      <D3Graph height={height} width={width} data={data} options={options}  />
+      <D3Graph height={height} width={width} data={data} options={options} eventBus={eventBus}  />
   );
 };

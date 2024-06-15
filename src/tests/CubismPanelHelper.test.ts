@@ -118,9 +118,13 @@ describe('D3GraphRender', () => {
   let mockPanelDiv: HTMLDivElement;
   let mockTicks: any;
   let mockExtent: any;
+  let mockEventBus: any;
   const oldConsole = global.console.log;
 
   beforeEach(() => {
+    mockEventBus = {
+      publish: jest.fn(() => {}),
+    };
     mockTicks = jest.fn(() => {
       return mockContext.axis();
     });
@@ -188,7 +192,6 @@ describe('D3GraphRender', () => {
     });
 
     // Mock console functions for testing
-    //global.console.log = jest.fn();
   });
 
   afterEach(() => {
@@ -196,19 +199,33 @@ describe('D3GraphRender', () => {
     jest.clearAllMocks();
   });
   it('should not render if panelDiv is null or data.series is empty', () => {
-    const renderFn = D3GraphRender(mockContext, getData(86400), mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(
+      mockContext,
+      getData(86400),
+      mockOptions,
+      mockStyles,
+      mockEventBus,
+      convertAllDataToCubism
+    );
     expect(renderFn(null)).toBeUndefined();
   });
 
   it('should not render graph when data series is empty ', () => {
-    const renderFn = D3GraphRender(mockContext, mockData, mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(
+      mockContext,
+      mockData,
+      mockOptions,
+      mockStyles,
+      mockEventBus,
+      convertAllDataToCubism
+    );
     expect(renderFn(mockPanelDiv)).toBeUndefined();
   });
   it('should call convertDataToCubism with Auto', () => {
     let data = getData(86400);
     data.series[0].length = 0;
     const mockHelper = jest.fn(() => [null]);
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockHelper);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
     renderFn(mockPanelDiv);
 
     const calls = mockHelper.mock.calls;
@@ -228,7 +245,7 @@ describe('D3GraphRender', () => {
     let data = getData(86400);
     data.series[0].length = 0;
     const mockHelper = jest.fn(() => []);
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockHelper);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
     renderFn(mockPanelDiv);
 
     const calls = mockHelper.mock.calls;
@@ -250,7 +267,7 @@ describe('D3GraphRender', () => {
     const mockHelper = jest.fn(() => []);
     mockOptions.automaticSampling = false;
     mockOptions.sampleType = false;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockHelper);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
     renderFn(mockPanelDiv);
 
     const calls = mockHelper.mock.calls;
@@ -272,7 +289,7 @@ describe('D3GraphRender', () => {
     const mockHelper = jest.fn(() => []);
     mockOptions.automaticSampling = false;
     mockOptions.sampleType = true;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockHelper);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
     renderFn(mockPanelDiv);
 
     const calls = mockHelper.mock.calls;
@@ -293,7 +310,7 @@ describe('D3GraphRender', () => {
     data.series = [getValidSerie(width, 1, 86400)];
     mockOptions.automaticSampling = false;
     mockOptions.sampleType = false;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
     // Create a spy on the function
 
     renderFn(mockPanelDiv);
@@ -311,7 +328,7 @@ describe('D3GraphRender', () => {
     const data = getData(86400);
     data.series = [getValidSerie(width, 1, 86400)];
     mockOptions.automaticExtents = true;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -327,7 +344,7 @@ describe('D3GraphRender', () => {
   it('should render graph and text when panelDiv and data are valid', () => {
     const data = getData(86400);
     data.series = [getValidSerie(width, 1, 86400)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -344,7 +361,7 @@ describe('D3GraphRender', () => {
     let time = 14 * 86400;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -360,7 +377,7 @@ describe('D3GraphRender', () => {
     let time = 14 * 86400 - 1;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -376,7 +393,7 @@ describe('D3GraphRender', () => {
     let time = 86400 / 2 - 1;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -392,7 +409,7 @@ describe('D3GraphRender', () => {
     let time = 86400 - 1;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -407,7 +424,7 @@ describe('D3GraphRender', () => {
   it('should render graph and text when panelDiv and data are valid and called for an hour ', () => {
     const data = getData(3500);
     data.series = [getValidSerie(width, 1, 3500)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -418,6 +435,80 @@ describe('D3GraphRender', () => {
     expect(mockContext.horizon).toHaveBeenCalled();
     expect(mockContext.rule).toHaveBeenCalled();
     expect(mockContext.zoom).toHaveBeenCalled();
+  });
+});
+
+describe('focusCallback', () => {
+  let context: any;
+  let mockOptions: any;
+  let mockStyles: any;
+  let mockPanelDiv: HTMLDivElement;
+  let mockEventBus: any;
+
+  beforeEach(() => {
+    context = cubism.context();
+
+    mockEventBus = {
+      publish: jest.fn(() => {}),
+    };
+
+    mockOptions = {
+      text: 'Hello, World!',
+      automaticExtents: false,
+      extentMin: 0,
+      extentMax: 100,
+      automaticSampling: true,
+      sampleType: false,
+    };
+    mockStyles = {
+      'cubism-panel': 'panel',
+      cubismgraph: 'graph',
+      canvas: 'canvas',
+      axis: 'axis',
+      horizon: 'horizon',
+      rule: 'rule',
+      value: 'value',
+      title: 'title',
+      textBox: 'text-box',
+    };
+
+    mockPanelDiv = document.createElement('div');
+    Object.defineProperty(mockPanelDiv, 'clientWidth', {
+      value: 300,
+      writable: false, // Ensuring the property remains read-only
+    });
+  });
+  it('should call eventBus when context.focus() is called', () => {
+    const width = 300;
+    document.body.innerHTML = '<div id="demo"></div>';
+
+    mockPanelDiv = document.createElement('div');
+    Object.defineProperty(mockPanelDiv, 'clientWidth', {
+      value: width,
+      writable: false, // Ensuring the property remains read-only
+    });
+
+    // Mock console functions for testing
+    context = cubism.context();
+    let data = getData(3500);
+    data.series = [getValidSerie(width, 1, 3500)];
+    mockEventBus.publish();
+    const renderFn = D3GraphRender(context, data, mockOptions, mockStyles, mockEventBus);
+
+    // @ts-ignore
+    renderFn(mockPanelDiv);
+
+    context.focus(12);
+    expect(mockEventBus.publish).toHaveBeenCalled();
+    expect(mockEventBus.publish).toHaveBeenCalledWith({
+      origin: undefined,
+      payload: {
+        point: { time: new Date('2020-09-01T00:18:11.283Z') },
+      },
+      type: 'data-hover',
+    });
+    expect(mockPanelDiv.innerHTML).not.toBe('');
+    expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
   });
 });
 
