@@ -5,7 +5,16 @@ process.env.TZ = 'UTC';
 const path = require('path');
 const { grafanaESModules, nodeModulesToTransform } = require('./.config/jest/utils');
 // Array of known package dependencies that only bundle an ESM version
-let ESModules = ['d3', 'd3-array', 'd3-.*', 'internmap', 'robust-predicates', 'delaunator', ...grafanaESModules];
+let ESModules = [
+  'd3',
+  'd3-array',
+  'd3-.*',
+  'internmap',
+  'robust-predicates',
+  'cubism-es',
+  'delaunator',
+  ...grafanaESModules,
+];
 
 let ignoredModules = [nodeModulesToTransform(ESModules)];
 exports = {
