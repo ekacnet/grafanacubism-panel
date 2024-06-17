@@ -1,6 +1,6 @@
 {
   "name": "cubism-grafana-panel",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A panel to display cubism like graph in grafana",
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
@@ -21,7 +21,7 @@
     "server": "docker-compose up --build",
     "sign": "npx --yes @grafana/sign-plugin@latest",
     "pretty": "prettier --single-quote  --write \"{src,__{tests,demo,dist}__}/**/*.ts*\"",
-    "prepare": "cd 3rdparty/cubism-es; npm install; npm run build"
+    "prepare": "relative-deps"
   },
   "nyc": {
     "report-dir": "coverage/cypress"
@@ -44,6 +44,7 @@
     "@types/node": "^20.8.7",
     "@types/react-router-dom": "^5.2.0",
     "@types/testing-library__jest-dom": "5.14.8",
+    "babel-jest": "^29.7.0",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.3",
     "eslint-plugin-deprecation": "^2.0.0",
@@ -56,6 +57,7 @@
     "jest-environment-jsdom": "^29.5.0",
     "node-sass": "^9.0.0",
     "prettier": "^2.8.7",
+    "relative-deps": "^1.0.7",
     "replace-in-file-webpack-plugin": "^1.0.6",
     "sass": "^1.63.2",
     "sass-loader": "^13.3.1",
@@ -86,5 +88,8 @@
     "react-dom": "^18.2.0",
     "tslib": "^2.5.3"
   },
-  "packageManager": "npm@10.1.0"
+  "packageManager": "npm@10.1.0",
+  "relativeDependencies": {
+    "cubism-es": "3rdparty/cubism-es/"
+  }
 }
