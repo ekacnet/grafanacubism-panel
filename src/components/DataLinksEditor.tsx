@@ -11,10 +11,10 @@ const DataLinkEditorWarning: React.FC<{
 }> = ({ links}) => {
     let msg = "";
     let prefix ="";
-    if (links.length > 1) {
+    if (links && links.length > 1) {
         prefix ="⚠"
         msg = "more than one link is not supported for cubism";
-    } else if (links.length === 1) {
+    } else if (links && links.length === 1) {
         let url = links[0].url
         const pattern = /\${[^}]*}/g;
         const extractedVariables: string[] = url.match(pattern)!;

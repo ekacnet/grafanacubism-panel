@@ -77,7 +77,7 @@ jobs:
 
       - name: Start grafana docker
         if: steps.check-for-e2e.outputs.has-e2e == 'true'
-        run: docker-compose up -d
+        run: docker compose up -d
 
       - name: Run e2e tests
         id: run-e2e-tests
@@ -94,7 +94,7 @@ jobs:
 
       - name: Stop grafana docker
         if: steps.check-for-e2e.outputs.has-e2e == 'true'
-        run: docker-compose down
+        run: docker compose down
 
       - name: Sign plugin
         run: npm run sign
