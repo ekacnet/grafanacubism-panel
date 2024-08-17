@@ -214,13 +214,13 @@ export const zoomCallbackGen = (
 ): cubism.zoomCallback => {
   const f = (start: number, end: number, selection: cubism.d3Selection) => {
     if (options.links.length === 0) {
-      console.log("Can't do any zoom, there is no links to zoom to");
+      log_debug("Can't do any zoom, there is no links to zoom to");
       return;
     }
     log_debug(`Doing a zoom from point ${start} to point ${end}`);
 
     if (options.links.length > 1) {
-      console.log('There is more than one link, linked to this graph, will pick the first one');
+      log_debug('There is more than one link, linked to this graph, will pick the first one');
     }
     let link = options.links[0].url;
     isString(link);

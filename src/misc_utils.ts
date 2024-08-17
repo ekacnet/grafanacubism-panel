@@ -5,10 +5,11 @@ export function enableDebug(): void {
 export function log_debug(message?: any, ...optionalParams: any[]): void {
   // Set it to true to enable debugging
   if (debug) {
+    let destination = console;
     if (optionalParams.length > 0) {
-      return console.log(message, optionalParams.join(' '));
+      return destination.log(message, optionalParams.join(' '));
     } else {
-      return console.log(message);
+      return destination.log(message);
     }
   }
 }
