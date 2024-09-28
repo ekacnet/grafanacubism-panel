@@ -12,8 +12,8 @@ see the [Grafana plugin installation documentation](https://grafana.com/docs/gra
 The quckstart is to use the `grafana cli` to install the plugin from the Rockset public S3 bucket:
 ```
 grafana cli \
-  --pluginUrl https://github.com/ekacnet/cubismgrafana-panel/releases/download/v0.0.1/cubismgrafana-panel-0.0.1.zip \
-  plugins install cubismgrafana-panel
+  --pluginUrl https://github.com/ekacnet/grafanacubism-panel/releases/download/v0.0.8/ekacnet-cubismgrafana-panel-0.0.8.zip \
+  plugins install ekacnet-cubismgrafana-panel
 ```
 
 ## Developing / Contributing
