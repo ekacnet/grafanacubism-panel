@@ -6,6 +6,7 @@ import * as cubism from 'cubism-es';
 
 import { DashboardLink, DashboardLinkType } from '@grafana/schema';
 import { dateTime, toDataFrame, LoadingState, PanelData } from '@grafana/data';
+import { enableDebug } from 'misc_utils';
 
 const getValidSerie = (width: number, seed: number, span: number) => {
   const timestamp = 1598919367000;
@@ -532,6 +533,7 @@ describe('zoomCallbackGen', () => {
     const l = options.links[0];
     options.links.push(l);
     const zoomCallback = zoomCallbackGen(context, data, options);
+    enableDebug();
     const oldFunc = console.log;
     console.log = jest.fn();
     const mockSelection = getSelection();
@@ -550,6 +552,7 @@ describe('zoomCallbackGen', () => {
   it('should log a message if there are no links to zoom to', () => {
     options = createMockOptions();
     const zoomCallback = zoomCallbackGen(context, data, options);
+    enableDebug();
     const oldFunc = console.log;
     console.log = jest.fn();
 
