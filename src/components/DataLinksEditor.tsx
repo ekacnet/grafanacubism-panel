@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 
 // filter out suggestions that we don't support
 type getSuggestionsFunc = () => VariableSuggestion[]
+
 const DataLinkEditorWarning: React.FC<{
     links: Array<DataLink<any>>
 }> = ({ links}) => {
@@ -19,9 +20,11 @@ const DataLinkEditorWarning: React.FC<{
         const pattern = /\${[^}]*}/g;
         const extractedVariables: string[] = url.match(pattern)!;
         let unsupported: string[] = [];
-        for (let j = 0; j < extractedVariables.length; j++) {
-            if (!extractedVariables[j].slice(2, -1).startsWith('__field.labels')) {
-                unsupported.push(extractedVariables[j])
+        if (extractedVariables) {
+            for (let j = 0; j < extractedVariables.length; j++) {
+                if (!extractedVariables[j].slice(2, -1).startsWith('__field.labels')) {
+                    unsupported.push(extractedVariables[j])
+                }
             }
         }
         if (unsupported.length > 0) {
