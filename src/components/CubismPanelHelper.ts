@@ -2,7 +2,8 @@ import { CubismOptions } from 'types';
 import * as cubism from 'cubism-es';
 import * as d3 from 'd3';
 
-import { DataHoverEvent, EventBus, PanelData, DataFrame } from '@grafana/data';
+import { PanelData, DataFrame } from '@grafana/data';
+import { DataHoverEvent, EventBus } from '@grafana/runtime';
 import { getSerieByName, convertAllDataToCubism } from '../cubism_utils';
 import { log_debug } from '../misc_utils';
 import { calculateSecondOffset } from '../date_utils';
