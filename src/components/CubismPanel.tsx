@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
-import { DataHoverEvent, PanelProps, PanelData, GrafanaTheme2, EventBus } from '@grafana/data';
+import { PanelProps, PanelData, GrafanaTheme2 } from '@grafana/data';
+import { DataHoverEvent, EventBus } from '@grafana/runtime';
 import { CubismOptions } from 'types';
 import { css } from '@emotion/css';
 import {  useStyles2, useTheme2 } from '@grafana/ui';

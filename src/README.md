@@ -16,7 +16,7 @@ Something similar to this graph:
 
 ## Requirements
 
-Grafana 10.3 is required to install this plugin.
+Grafana 12.0 is required to install this plugin.
 
 ## Getting Started
 
