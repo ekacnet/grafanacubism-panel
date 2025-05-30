@@ -3,7 +3,7 @@ import { DataHoverEvent, PanelProps, PanelData, GrafanaTheme2, EventBus } from '
 import { CubismOptions } from 'types';
 import { css } from '@emotion/css';
 import {  useStyles2, useTheme2 } from '@grafana/ui';
-import * as cubism from 'cubism-es';
+import * as cubism from 'cubism-ng';
 
 import { config } from '@grafana/runtime';
 import { log_debug } from '../misc_utils';

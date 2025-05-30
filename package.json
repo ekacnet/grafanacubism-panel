@@ -82,8 +82,8 @@
     "@grafana/schema": "^10.3.3",
     "@grafana/ui": "^10.3.3",
     "@types/d3": "^7.4.3",
-    "cubism-es": "file:./3rdparty/cubism-es",
-    "node-gyp": "^11.2.0",
+    "cubism-ng": "file:./3rdparty/cubism-ng",
+    "cypress": "^14.4.0",
     "pretty": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -91,6 +91,6 @@
   },
   "packageManager": "npm@10.1.0",
   "relativeDependencies": {
-    "cubism-es": "3rdparty/cubism-es/"
+    "cubism-ng": "3rdparty/cubism-ng/"
   }
 }

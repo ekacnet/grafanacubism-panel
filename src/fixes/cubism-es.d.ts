@@ -1,4 +1,4 @@
-declare module 'cubism-es' {
+declare module 'cubism-ng' {
   export type d3Selection = d3.Selection<BaseType, unknown, HTMLElement, any>;
   export type zoomCallback = (param1: number, param2: number, param3: d3Selection) => void;
   export interface ZoomContext {

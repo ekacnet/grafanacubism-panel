@@ -1,5 +1,5 @@
 import { DataFrame, getFieldDisplayName } from '@grafana/data';
-import * as cubism from 'cubism-es';
+import * as cubism from 'cubism-ng';
 import _ from 'lodash';
 
 function linearExtrapolation(point1: number[], point2: number[], ts: number): number {
