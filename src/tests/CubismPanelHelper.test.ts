@@ -2,7 +2,7 @@ import { D3GraphRender, zoomCallbackGen } from '../components/CubismPanelHelper'
 import { CubismOptions } from '../types';
 import { convertAllDataToCubism } from '../cubism_utils';
 import * as d3 from 'd3';
-import * as cubism from 'cubism-es';
+import * as cubism from 'cubism-ng';
 
 import { DashboardLink, DashboardLinkType } from '@grafana/schema';
 import { dateTime, toDataFrame, LoadingState, PanelData } from '@grafana/data';

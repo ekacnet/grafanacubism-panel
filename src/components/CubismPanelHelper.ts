@@ -1,5 +1,5 @@
 import { CubismOptions } from 'types';
-import * as cubism from 'cubism-es';
+import * as cubism from 'cubism-ng';
 import * as d3 from 'd3';
 
 import { DataHoverEvent, EventBus, PanelData, DataFrame } from '@grafana/data';
