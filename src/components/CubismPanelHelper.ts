@@ -22,6 +22,8 @@ export const D3GraphRender = (
   convertDatahelper: (d: DataFrame[], n: number[], o: any, z: number) => cubism.Metric[] = convertAllDataToCubism
 ): ((wrapperDiv: HTMLDivElement | null) => void) => {
   return (panelDiv: HTMLDivElement | null) => {
+    let now = Date.now();
+    log_debug('Rending' + now);
     if (!panelDiv) {
       return;
     }
@@ -30,13 +32,6 @@ export const D3GraphRender = (
       return;
     }
     // Initialize most of the variables and constants
-    let showText = false;
-
-    if (options.text !== undefined && options.text !== null && options.text !== '') {
-      showText = true;
-    }
-    log_debug('Show text is ', showText);
-    let now = Date.now();
     let begin = new Date();
     const request = data.request!;
 

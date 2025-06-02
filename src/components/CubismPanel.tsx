@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useRef,useEffect} from 'react';
 import { DataHoverEvent, PanelProps, PanelData, GrafanaTheme2, EventBus } from '@grafana/data';
 import { CubismOptions } from 'types';
 import { css } from '@emotion/css';
@@ -171,6 +171,7 @@ export const adjustCubismCrossHair = (context: cubism.Context, hoverEventData: D
   }
 }
 
+
 export const D3Graph: React.FC<{
   height: number;
   width: number;
@@ -183,27 +184,61 @@ export const D3Graph: React.FC<{
   if (options.text !== undefined && options.text !== null && options.text !== '') {
     showText = true;
   }
-  log_debug('Show text is ', showText);
+  log_debug("Show text is " + showText);
   const styles = useStyles2(getStyles(showText, useTheme2()));
-  // useState() ...
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const renderD3 = React.useCallback(
-     D3GraphRender(context, data,  options, styles, eventBus)
-    , [context, data, options, styles]
-  )
+  const renderTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const renderD3Ref = useRef<HTMLDivElement>(null);
+  const lastRenderRef = useRef<number>(Date.now()-1000);
+
   useEffect(() => {
-    // Like componentDidMount()
-    let subscribe = eventBus.getStream(DataHoverEvent).subscribe((data)=>{
+    let now = Date.now()
+    log_debug("Checking "  + (now - lastRenderRef.current))
+    if (
+        renderTimerRef.current
+    ) {
+      clearTimeout(renderTimerRef.current);
+    }
+
+    // check if it's been a while since last re-render if so do one, if start a timeout and wait for
+    // it to expire to actually do the rendering, this avoid costly continuous rendering when
+    // resizing the window or changing the title
+    if (
+         (now - lastRenderRef.current) > 1000
+    ) {
+      lastRenderRef.current = now
+      if (renderD3Ref.current) {
+        D3GraphRender(context, data, options, styles, eventBus)(renderD3Ref.current);
+      }
+    } else {
+
+      renderTimerRef.current = setTimeout(() => {
+        lastRenderRef.current = now
+        if (renderD3Ref.current) {
+          D3GraphRender(context, data, options, styles, eventBus)(renderD3Ref.current);
+        }
+      }, 100); // 100 ms
+    }
+
+    return () => {
+      if (renderTimerRef.current) {
+        clearTimeout(renderTimerRef.current);
+      }
+    };
+  }, [context, data, options, styles,  eventBus]); // Re-run when any of these change
+
+  useEffect(() => {
+    const sub = eventBus.getStream(DataHoverEvent).subscribe((data: DataHoverEvent) => {
       adjustCubismCrossHair(context, data);
-     });
+    });
     return () => {
       context.stop();
-      subscribe.unsubscribe();
+      sub.unsubscribe();
     };
-  });
-  return <div
-    ref={renderD3} />;
-};
+  }, [context, eventBus]);
+
+  return <div ref={renderD3Ref} />;
+}
+
 
 export const CubismPanel: React.FC<Props> = ({ options, data, width, height, eventBus }) => {
   return (
