@@ -1,5 +1,3 @@
-version: '3.0'
-
 services:
   grafana:
     container_name: 'cubismgrafana-panel'
@@ -8,7 +6,7 @@ services:
       context: ./.config
       args:
         grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
-        grafana_version: ${GRAFANA_VERSION:-10.3.3}
+        grafana_version: ${GRAFANA_VERSION:-11.5.2}
     networks:
       - grafana
     ports:
