@@ -596,7 +596,7 @@ describe('zoomCallbackGen', () => {
     mockSelection.select = jest.fn().mockReturnValueOnce({ text: jest.fn().mockReturnValue('grafana') });
 
     zoomCallback(0, 100, mockSelection);
-    expect(global.window.open).toHaveBeenCalledWith(expect.any(String), '_blank');
+    expect(global.window.open).toHaveBeenCalledWith(expect.any(String), '_blank', 'noopener,noreferrer');
     global.window.open = oldFunc;
   });
   it('should throw an error if field is not found', () => {

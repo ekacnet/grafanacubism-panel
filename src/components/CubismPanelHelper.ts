@@ -2,7 +2,7 @@ import { CubismOptions } from 'types';
 import * as cubism from 'cubism-ng';
 import * as d3 from 'd3';
 
-import { DataHoverEvent, EventBus, PanelData, DataFrame } from '@grafana/data';
+import { DataHoverEvent, EventBus, PanelData, DataFrame, textUtil } from '@grafana/data';
 import { getSerieByName, convertAllDataToCubism } from '../cubism_utils';
 import { log_debug } from '../misc_utils';
 import { calculateSecondOffset } from '../date_utils';
@@ -246,10 +246,12 @@ export const zoomCallbackGen = (
     }
     filteredString = filteredString + '&from=' + +context._scale.invert(start);
     filteredString = filteredString + '&to=' + +context._scale.invert(end);
+    // Sanitize to block javascript:, vbscript:, data:, etc. (GHSA fix — stored XSS via zoom link)
+    const safeUrl = textUtil.sanitizeUrl(filteredString);
     if (options.links[0].targetBlank) {
-      window.open(filteredString, '_blank');
+      window.open(safeUrl, '_blank', 'noopener,noreferrer');
     } else {
-      window.location.assign(filteredString);
+      window.location.assign(safeUrl);
     }
   };
   return f;
