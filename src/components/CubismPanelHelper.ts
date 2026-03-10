@@ -23,7 +23,7 @@ export const D3GraphRender = (
 ): ((wrapperDiv: HTMLDivElement | null) => void) => {
   return (panelDiv: HTMLDivElement | null) => {
     let now = Date.now();
-    log_debug('Rending' + now);
+    log_debug('Rendering ' + now);
     if (!panelDiv) {
       return;
     }
@@ -60,15 +60,9 @@ export const D3GraphRender = (
 
     panelDiv.innerHTML = '';
     panelDiv.className = styles['cubism-panel'];
-    let cubismData = convertDatahelper(data.series, cubismTimestamps, context, step);
-
-    cubismData = cubismData.filter(function (el) {
-      if (el !== null) {
-        return true;
-      } else {
-        return false;
-      }
-    });
+    let cubismData = convertDatahelper(data.series, cubismTimestamps, context, step).filter(
+      (el): el is cubism.Metric => el !== null
+    );
 
     let prev = +now;
     now = Date.now();
