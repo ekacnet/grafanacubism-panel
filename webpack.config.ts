@@ -14,7 +14,8 @@ const config = async (env: any): Promise<Configuration> => {
         },
       ],
     },
-    mode: 'development',
+    // `mode` is inherited from grafanaConfig(env), which sets it to
+    // 'production' when env.production is true. Do not override it here.
   };
   return merge(baseConfig, customConfig);
 };
