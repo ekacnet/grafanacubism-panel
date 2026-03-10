@@ -9,7 +9,6 @@ import {
   getSerieByName,
 } from '../cubism_utils';
 import { toDataFrame, DataFrame } from '@grafana/data';
-import _ from 'lodash';
 
 describe('convertDataToCubism', () => {
   it('should be defined', () => {
@@ -300,7 +299,7 @@ describe('genGrafanaMetric', () => {
     ];
     const override = { summaryType: 'avg' };
 
-    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, dataAndTS, override, 1)).value();
+    let values = timestamps.map(genGrafanaMetric(timestamps, dataAndTS, override, 1));
     expect(values.length).toBe(3);
     expect(values).toStrictEqual([10, 25, 40]);
   });
@@ -319,7 +318,9 @@ describe('genGrafanaMetric', () => {
     expect(result).toBe(dataPoints[0]);
   });
 
-  it('should return the next point when ts is greater than or equal to nextPointTS', () => {
+  it('should return correct values for sequential in-order calls', () => {
+    // genGrafanaMetric maintains an internal cursor for O(n) performance;
+    // it requires calls to arrive in non-decreasing tsIndex order.
     const dataPoints = [1, 2, 3];
     const dataPointsTS = [1000, 2000, 3000];
     let val: number[][] = [];
@@ -330,10 +331,9 @@ describe('genGrafanaMetric', () => {
     }
 
     let fn = genGrafanaMetric(dataPointsTS, val, override, 1000);
-    let result = fn(2000, 1);
-    expect(result).toBe(dataPoints[1]);
-    result = fn(1000, 0);
-    expect(result).toBe(dataPoints[0]);
+    expect(fn(1000, 0)).toBe(dataPoints[0]);
+    expect(fn(2000, 1)).toBe(dataPoints[1]);
+    expect(fn(3000, 2)).toBe(dataPoints[2]);
   });
 
   it('should return the last point when there is no next point', () => {
@@ -362,7 +362,7 @@ describe('genGrafanaMetric', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 1000)).value();
+    let values = timestamps.map(genGrafanaMetric(timestamps, val, override, 1000));
     expect(values.length).toBe(5);
     expect(values).toStrictEqual([1, 2, null, null, 3]);
   });
@@ -377,7 +377,7 @@ describe('genGrafanaMetric', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 10)).value();
+    let values = timestamps.map(genGrafanaMetric(timestamps, val, override, 10));
     expect(values.length).toBe(timestamps.length);
     expect(values).toStrictEqual([null, null, null, 1, 2, 3, null, null, null, null, null, null, null, null]);
   });
@@ -392,7 +392,7 @@ describe('genGrafanaMetric', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 10)).value();
+    let values = timestamps.map(genGrafanaMetric(timestamps, val, override, 10));
     expect(values.length).toBe(timestamps.length);
     expect(values).toStrictEqual([null, null, null, 1, 2, 3, null]);
   });
@@ -407,7 +407,7 @@ describe('genGrafanaMetric', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 100)).value();
+    let values = timestamps.map(genGrafanaMetric(timestamps, val, override, 100));
     expect(values.length).toBe(timestamps.length);
     expect(values).toStrictEqual([
       null,
@@ -438,7 +438,7 @@ describe('genGrafanaMetric', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 100)).value();
+    let values = timestamps.map(genGrafanaMetric(timestamps, val, override, 100));
     expect(values.length).toBe(timestamps.length);
     expect(values).toStrictEqual([
       null,
@@ -469,7 +469,7 @@ describe('genGrafanaMetric', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 10)).value();
+    let values = timestamps.map(genGrafanaMetric(timestamps, val, override, 10));
     expect(values.length).toBe(timestamps.length);
     expect(values).toStrictEqual([null, null, null, 1, 2, null, 3, null, null, null, null, null, null, null]);
   });
@@ -484,19 +484,19 @@ describe('genGrafanaMetric', () => {
       val.push([dataPointsTS[i], dataPoints[i]]);
     }
 
-    let values = _.chain(timestamps).map(genGrafanaMetric(timestamps, val, override, 10)).value();
+    let values = timestamps.map(genGrafanaMetric(timestamps, val, override, 10));
     expect(values.length).toBe(timestamps.length);
     expect(values).toStrictEqual([null, null, null, 1, 2, null, null, null, null, null, 3.5, null, null, null]);
   });
-  it('should convertAllDataToCubism just work when there is nothing', () => {
+  it('should return empty array when input series is empty', () => {
     const timestamps = [1, 2, 3, 4];
     const context = {
       metric: (callback: any, name: string) => {},
     };
     expect(() => convertAllDataToCubism([], timestamps, context, 1)).not.toThrow();
-    expect(convertAllDataToCubism([], timestamps, context, 1)).toStrictEqual([null]);
+    expect(convertAllDataToCubism([], timestamps, context, 1)).toStrictEqual([]);
   });
-  it('should convertAllDataToCubism just work when there is nothing', () => {
+  it('should return [null] when the only series has no fields', () => {
     const timestamps = [1, 2, 3, 4];
     const context = {
       metric: (callback: any, name: string) => {},

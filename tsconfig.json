@@ -2,6 +2,7 @@
   "extends": "./.config/tsconfig.json",
   "compilerOptions": {
     "allowJs": true,
-    "types": ["jest"]
+    "types": ["jest", "node"],
+    "lib": ["dom", "dom.iterable", "es2022"]
   }
 }
