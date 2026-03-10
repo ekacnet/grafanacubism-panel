@@ -1,11 +1,10 @@
-import React, {useRef,useEffect} from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { DataHoverEvent, PanelProps, PanelData, GrafanaTheme2, EventBus } from '@grafana/data';
 import { CubismOptions } from 'types';
 import { css } from '@emotion/css';
-import {  useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import * as cubism from 'cubism-ng';
 
-import { config } from '@grafana/runtime';
 import { log_debug } from '../misc_utils';
 import { D3GraphRender } from './CubismPanelHelper';
 
@@ -13,7 +12,7 @@ interface Props extends PanelProps<CubismOptions> {}
 
 type CSS = string;
 
-type StylesGetter = () => CSSStyles
+type StylesGetter = (theme: GrafanaTheme2) => CSSStyles;
 
 interface CSSStyles {
   [ key: string ]: CSS
@@ -27,36 +26,23 @@ interface CubismColors {
   pageBG: CSS
 }
 
-const getStyles = (showText: boolean, theme: GrafanaTheme2): StylesGetter => {
-  const colors: CubismColors = {
-    bodyColor:"",
-    textColor: "",
-    textColorWeak: "",
-    backgroundColor: "",
-    pageBG: ""
-  }
+// Resolve theme-aware colors. Currently light mode falls back to dark palette
+// until a proper light palette is designed; this keeps one source of truth
+// instead of an identical if/else.
+const resolveColors = (theme: GrafanaTheme2): CubismColors => ({
+  backgroundColor: theme.colors.primary.main,
+  bodyColor: '#D8D9DA',
+  textColor: '#D8D9DA',
+  textColorWeak: '#7B7B7B',
+  pageBG: '#1f1d1d',
+});
 
-  colors.backgroundColor = theme.colors.primary.main;
-
-  if (config.theme2.isDark) {
-    colors.bodyColor="#D8D9DA";
-    colors.textColor = "#D8D9DA";
-    colors.textColorWeak="#7B7B7B";
-    colors.pageBG="#1f1d1d";
-  } else {
-    colors.bodyColor="#D8D9DA";
-    colors.textColor = "#D8D9DA";
-    colors.textColorWeak="#7B7B7B";
-    colors.pageBG="#1f1d1d";
-  }
-
-  return function () {
+const getStyles = (showText: boolean): StylesGetter => {
+  return (theme: GrafanaTheme2) => {
+    const colors = resolveColors(theme);
     // 28px is the height of the axis
-    let innerheight = 'calc(100% - 28px)';
-    let outerheight = '100%';
-    if (showText) {
-      outerheight = 'calc(100% - 2em)';
-    }
+    const innerheight = 'calc(100% - 28px)';
+    const outerheight = showText ? 'calc(100% - 2em)' : '100%';
     return {
       'zoom': css`
         label: cubism-zoom;
@@ -102,8 +88,6 @@ const getStyles = (showText: boolean, theme: GrafanaTheme2): StylesGetter => {
         }
         & line {
           fill: none;
-          stroke: ${colors.bodyColor};
-          shape-rendering: crispEdges;
           stroke: ${colors.textColorWeak};
           shape-rendering: crispEdges;
         }
@@ -178,45 +162,47 @@ export const D3Graph: React.FC<{
   data: PanelData;
   options: CubismOptions;
   eventBus: EventBus;
-}> = ({ height, width, data, options, eventBus }) => {
-  let context = cubism.context();
-  let showText = false;
-  if (options.text !== undefined && options.text !== null && options.text !== '') {
-    showText = true;
+}> = ({ data, options, eventBus }) => {
+  // cubism.context() allocates scales/listeners; create once per component lifetime,
+  // not on every render. All renders reuse contextRef.current.
+  const contextRef = useRef<cubism.Context | null>(null);
+  if (contextRef.current === null) {
+    contextRef.current = cubism.context();
   }
-  log_debug("Show text is " + showText);
-  const styles = useStyles2(getStyles(showText, useTheme2()));
+  const context = contextRef.current;
+
+  const showText = options.text !== undefined && options.text !== null && options.text !== '';
+  log_debug('Show text is ' + showText);
+
+  // Memoize the styles-getter factory so useStyles2 receives a stable reference
+  // and can actually cache the result instead of regenerating CSS every render.
+  const stylesGetter = useMemo(() => getStyles(showText), [showText]);
+  const styles = useStyles2(stylesGetter);
+
   const renderTimerRef = useRef<NodeJS.Timeout | null>(null);
   const renderD3Ref = useRef<HTMLDivElement>(null);
-  const lastRenderRef = useRef<number>(Date.now()-1000);
+  const lastRenderRef = useRef<number>(Date.now() - 1000);
 
   useEffect(() => {
-    let now = Date.now()
-    log_debug("Checking "  + (now - lastRenderRef.current))
-    if (
-        renderTimerRef.current
-    ) {
+    const now = Date.now();
+    log_debug('Checking ' + (now - lastRenderRef.current));
+    if (renderTimerRef.current) {
       clearTimeout(renderTimerRef.current);
     }
 
-    // check if it's been a while since last re-render if so do one, if start a timeout and wait for
-    // it to expire to actually do the rendering, this avoid costly continuous rendering when
-    // resizing the window or changing the title
-    if (
-         (now - lastRenderRef.current) > 1000
-    ) {
-      lastRenderRef.current = now
+    const doRender = () => {
+      lastRenderRef.current = Date.now();
       if (renderD3Ref.current) {
         D3GraphRender(context, data, options, styles, eventBus)(renderD3Ref.current);
       }
-    } else {
+    };
 
-      renderTimerRef.current = setTimeout(() => {
-        lastRenderRef.current = now
-        if (renderD3Ref.current) {
-          D3GraphRender(context, data, options, styles, eventBus)(renderD3Ref.current);
-        }
-      }, 100); // 100 ms
+    // Throttle: render immediately if it has been >1s since the last render,
+    // otherwise debounce for 100ms to avoid thrashing during window resize.
+    if (now - lastRenderRef.current > 1000) {
+      doRender();
+    } else {
+      renderTimerRef.current = setTimeout(doRender, 100);
     }
 
     return () => {
@@ -224,7 +210,7 @@ export const D3Graph: React.FC<{
         clearTimeout(renderTimerRef.current);
       }
     };
-  }, [context, data, options, styles,  eventBus]); // Re-run when any of these change
+  }, [context, data, options, styles, eventBus]);
 
   useEffect(() => {
     const sub = eventBus.getStream(DataHoverEvent).subscribe((data: DataHoverEvent) => {
