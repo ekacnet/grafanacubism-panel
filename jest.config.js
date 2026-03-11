@@ -22,14 +22,6 @@ exports = {
   ...require('./.config/jest.config'),
   setupFiles: ['jest-canvas-mock'],
   coverageDirectory: 'coverage/jest',
-  globals: {
-    'ts-jest': {
-      tsConfigFile: 'tsconfig.json',
-      useESM: true,
-    },
-    TextEncoder: require('util').TextEncoder,
-    TextDecoder: require('util').TextDecoder,
-  },
   moduleNameMapper: {
     '^cubism-ng$': path.resolve(__dirname, 'node_modules', 'cubism-ng', 'dist', 'cubism-ng.esm.js'),
   },
