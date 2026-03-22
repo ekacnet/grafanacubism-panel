@@ -12,3 +12,7 @@ First stable release
 ## 0.1.2
 
 Add support for debounce rendering, rename cubism-es to ([cubism-ng](https://github.com/ekacnet/cubism-es)).
+
+## 0.1.3
+
+Fix security vulnerability thanks to  Jari Takkal for reporting and fixing
