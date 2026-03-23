@@ -33,7 +33,7 @@ exports = {
   },
   moduleNameMapper: {
     ...(baseConfig.moduleNameMapper || {}),
-    '^cubism-ng$': path.resolve(__dirname, 'node_modules', 'cubism-ng', 'dist', 'cubism-ng.esm.js'),
+    '^cubism-ng$': path.resolve(__dirname, '3rdparty', 'cubism-ng', 'dist', 'cubism-ng.esm.js'),
   },
   transformIgnorePatterns: ignoredModules,
 };
