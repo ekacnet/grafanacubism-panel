@@ -120,7 +120,7 @@ describe('D3GraphRender', () => {
   let mockTicks: any;
   let mockExtent: any;
   let mockEventBus: any;
-  const oldConsole = global.console.log;
+  const oldConsole = console.log;
 
   beforeEach(() => {
     mockEventBus = {
@@ -196,7 +196,7 @@ describe('D3GraphRender', () => {
   });
 
   afterEach(() => {
-    global.console.log = oldConsole;
+    console.log = oldConsole;
     jest.clearAllMocks();
   });
   it('should not render if panelDiv is null or data.series is empty', () => {
@@ -229,12 +229,12 @@ describe('D3GraphRender', () => {
     const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
     renderFn(mockPanelDiv);
 
-    const calls = mockHelper.mock.calls;
+    const calls = mockHelper.mock.calls as unknown[][];
 
     expect(calls.length).toBe(1);
-    expect(calls[0].at(0)).toBe(data.series);
-    expect(calls[0].at(2)).toStrictEqual(mockContext);
-    expect(calls[0].at(3)).toStrictEqual(288000);
+    expect(calls[0][0]).toBe(data.series);
+    expect(calls[0][2]).toStrictEqual(mockContext);
+    expect(calls[0][3]).toStrictEqual(288000);
     expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
     expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
     expect(mockContext.axis).not.toHaveBeenCalled();
@@ -249,12 +249,12 @@ describe('D3GraphRender', () => {
     const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
     renderFn(mockPanelDiv);
 
-    const calls = mockHelper.mock.calls;
+    const calls = mockHelper.mock.calls as unknown[][];
 
     expect(calls.length).toBe(1);
-    expect(calls[0].at(0)).toBe(data.series);
-    expect(calls[0].at(2)).toStrictEqual(mockContext);
-    expect(calls[0].at(3)).toStrictEqual(288000);
+    expect(calls[0][0]).toBe(data.series);
+    expect(calls[0][2]).toStrictEqual(mockContext);
+    expect(calls[0][3]).toStrictEqual(288000);
     expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
     expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
     expect(mockContext.axis).not.toHaveBeenCalled();
@@ -271,12 +271,12 @@ describe('D3GraphRender', () => {
     const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
     renderFn(mockPanelDiv);
 
-    const calls = mockHelper.mock.calls;
+    const calls = mockHelper.mock.calls as unknown[][];
 
     expect(calls.length).toBe(1);
-    expect(calls[0].at(0)).toBe(data.series);
-    expect(calls[0].at(2)).toStrictEqual(mockContext);
-    expect(calls[0].at(3)).toStrictEqual(288000);
+    expect(calls[0][0]).toBe(data.series);
+    expect(calls[0][2]).toStrictEqual(mockContext);
+    expect(calls[0][3]).toStrictEqual(288000);
     expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
     expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
     expect(mockContext.axis).not.toHaveBeenCalled();
@@ -293,12 +293,12 @@ describe('D3GraphRender', () => {
     const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
     renderFn(mockPanelDiv);
 
-    const calls = mockHelper.mock.calls;
+    const calls = mockHelper.mock.calls as unknown[][];
 
     expect(calls.length).toBe(1);
-    expect(calls[0].at(0)).toBe(data.series);
-    expect(calls[0].at(2)).toStrictEqual(mockContext);
-    expect(calls[0].at(3)).toStrictEqual(288000);
+    expect(calls[0][0]).toBe(data.series);
+    expect(calls[0][2]).toStrictEqual(mockContext);
+    expect(calls[0][3]).toStrictEqual(288000);
     expect(mockPanelDiv.innerHTML).toBe('The series contained no data, check your query');
     expect(mockPanelDiv.className).toBe(mockStyles['cubism-panel']);
     expect(mockContext.axis).not.toHaveBeenCalled();
@@ -537,8 +537,8 @@ describe('zoomCallbackGen', () => {
     const oldFunc = console.log;
     console.log = jest.fn();
     const mockSelection = getSelection();
-    const oldFunc2 = global.window.open;
-    global.window.open = jest.fn();
+    const oldFunc2 = window.open;
+    window.open = jest.fn();
 
     mockSelection.select = jest.fn().mockReturnValueOnce({ text: jest.fn().mockReturnValue('grafana') });
 
@@ -547,7 +547,7 @@ describe('zoomCallbackGen', () => {
       'There is more than one link, linked to this graph, will pick the first one'
     );
     console.log = oldFunc;
-    global.window.open = oldFunc2;
+    window.open = oldFunc2;
   });
   it('should log a message if there are no links to zoom to', () => {
     options = createMockOptions();
@@ -580,7 +580,7 @@ describe('zoomCallbackGen', () => {
 
     zoomCallback(0, 100, mockSelection);
     // @ts-ignore
-    const callArgs = global.window.location.assign.mock.calls;
+    const callArgs = window.location.assign.mock.calls;
     const urlCalled = callArgs[0][0];
 
     // Expectation
@@ -589,15 +589,15 @@ describe('zoomCallbackGen', () => {
   it('should open a link in a new tab if targetBlank is true', () => {
     options = createMockOptions('http://example.com/&i=${__field.labels.instance}');
     const zoomCallback = zoomCallbackGen(context, data, options);
-    const oldFunc = global.window.open;
-    global.window.open = jest.fn();
+    const oldFunc = window.open;
+    window.open = jest.fn();
     const mockSelection = getSelection();
 
     mockSelection.select = jest.fn().mockReturnValueOnce({ text: jest.fn().mockReturnValue('grafana') });
 
     zoomCallback(0, 100, mockSelection);
-    expect(global.window.open).toHaveBeenCalledWith(expect.any(String), '_blank', 'noopener,noreferrer');
-    global.window.open = oldFunc;
+    expect(window.open).toHaveBeenCalledWith(expect.any(String), '_blank', 'noopener,noreferrer');
+    window.open = oldFunc;
   });
   it('should throw an error if field is not found', () => {
     const zoomCallback = zoomCallbackGen(context, data, options);
