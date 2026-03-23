@@ -186,7 +186,7 @@ export const D3Graph: React.FC<{
   }
   log_debug("Show text is " + showText);
   const styles = useStyles2(getStyles(showText, useTheme2()));
-  const renderTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderD3Ref = useRef<HTMLDivElement>(null);
   const lastRenderRef = useRef<number>(Date.now()-1000);
 
