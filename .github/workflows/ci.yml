@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '23'
           cache: 'npm'
 
       - name: Install dependencies
@@ -34,7 +34,7 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Unit tests
-        run: npm run test:ci
+        run: npm run pretest:ci && npm run test:ci
       - name: Build frontend
         run: npm run build
 

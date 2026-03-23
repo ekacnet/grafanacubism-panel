@@ -3,9 +3,12 @@
   "version": "0.1.3",
   "description": "A panel to display cubism like graph in grafana",
   "scripts": {
+    "prebuild": "npm run build:cubism-ng",
     "build": "webpack -c ./webpack.config.ts --env production",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged --detectOpenHandles --forceExit",
+    "build:cubism-ng": "npm --prefix 3rdparty/cubism-ng run build",
+    "pretest:ci": "npm run build:cubism-ng",
     "test:ci": "jest --passWithNoTests --detectOpenHandles --forceExit --maxWorkers 4 --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --ignore-path ./dist/module.js --ignore-path ./.gitignore --ignore-path ./3rdparty/.eslintignore --ext .js,.jsx,.ts,.tsx src",
