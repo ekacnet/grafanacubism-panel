@@ -4,6 +4,7 @@ process.env.TZ = 'UTC';
 
 const path = require('path');
 const { grafanaESModules, nodeModulesToTransform } = require('./.config/jest/utils');
+const baseConfig = require('./.config/jest.config');
 // Array of known package dependencies that only bundle an ESM version
 let ESModules = [
   'd3',
@@ -19,7 +20,7 @@ let ESModules = [
 let ignoredModules = [nodeModulesToTransform(ESModules)];
 exports = {
   // Jest configuration provided by Grafana scaffolding
-  ...require('./.config/jest.config'),
+  ...baseConfig,
   setupFiles: ['jest-canvas-mock'],
   coverageDirectory: 'coverage/jest',
   globals: {
@@ -31,6 +32,7 @@ exports = {
     TextDecoder: require('util').TextDecoder,
   },
   moduleNameMapper: {
+    ...(baseConfig.moduleNameMapper || {}),
     '^cubism-ng$': path.resolve(__dirname, 'node_modules', 'cubism-ng', 'dist', 'cubism-ng.esm.js'),
   },
   transformIgnorePatterns: ignoredModules,
