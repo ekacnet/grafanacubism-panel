@@ -4,6 +4,9 @@ import os from 'os';
 import path from 'path';
 import { glob } from 'glob';
 import { SOURCE_DIR } from './constants.ts';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 export function isWSL() {
   if (process.platform !== 'linux') {
