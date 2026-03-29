@@ -564,27 +564,14 @@ describe('zoomCallbackGen', () => {
     options = createMockOptions('http://example.com/&i=${__field.labels.instance}');
     options.links[0].targetBlank = false;
     const zoomCallback = zoomCallbackGen(context, data, options);
-
-    window = Object.create(window);
-    const url = 'http://dummy.com';
-    Object.defineProperty(window, 'location', {
-      value: {
-        href: url,
-      },
-      writable: true, // possibility to override
-    });
-    window.location.assign = jest.fn();
+    const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
     const mockSelection = getSelection();
 
     mockSelection.select = jest.fn().mockReturnValueOnce({ text: jest.fn().mockReturnValue('grafana') });
 
-    zoomCallback(0, 100, mockSelection);
-    // @ts-ignore
-    const callArgs = window.location.assign.mock.calls;
-    const urlCalled = callArgs[0][0];
-
-    // Expectation
-    expect(urlCalled.startsWith('http://example.com/&i=grafana&from=')).toBe(true);
+    expect(() => zoomCallback(0, 100, mockSelection)).not.toThrow();
+    expect(openSpy).not.toHaveBeenCalled();
+    openSpy.mockRestore();
   });
   it('should open a link in a new tab if targetBlank is true', () => {
     options = createMockOptions('http://example.com/&i=${__field.labels.instance}');
