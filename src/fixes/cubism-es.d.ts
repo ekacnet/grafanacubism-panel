@@ -4,6 +4,8 @@ declare module 'cubism-ng' {
   export interface ZoomContext {
     render(d3Selection);
     setZoomType(string);
+    enabled(): boolean;
+    disable(): void;
   }
 
   export type Metric = MetricValue | null;
@@ -24,7 +26,7 @@ declare module 'cubism-ng' {
     setCSSClass(string, string);
     getCSSClass(string): string;
     focus(number);
-    _scale: d3.scale;
+    _scale: d3.ScaleTime<number, number>;
   }
 
   export function context(): Context;

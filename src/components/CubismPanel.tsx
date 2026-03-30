@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { DataHoverEvent, PanelProps, PanelData, GrafanaTheme2, EventBus } from '@grafana/data';
+import { AbsoluteTimeRange, DataHoverEvent, PanelProps, PanelData, GrafanaTheme2, EventBus } from '@grafana/data';
 import { CubismOptions } from 'types';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
@@ -50,7 +50,7 @@ const getStyles = (showText: boolean): StylesGetter => {
       'cubism-panel': css`
         label: cubism-panel;
         height: 100%;
-        font-family: Open Sans;
+        font-family: ${theme.typography.fontFamily};
         position: relative;
         overflow: hidden;
       `,
@@ -64,6 +64,7 @@ const getStyles = (showText: boolean): StylesGetter => {
         label: canvas;
         overflow: auto;
         height: ${innerheight};
+        position: relative;
       `,
       'textBox': css`
         max-height: 2em;
@@ -84,7 +85,7 @@ const getStyles = (showText: boolean): StylesGetter => {
       'axis': css`
         & {
           label: axis;
-          font: 10px sans-serif;
+          font: 10px ${theme.typography.fontFamily};
         }
         & line {
           fill: none;
@@ -127,10 +128,12 @@ const getStyles = (showText: boolean): StylesGetter => {
         & .titleCubism, & .valueCubism {
             bottom: 0;
             color: ${colors.textColor};
+            font-family: ${theme.typography.fontFamily};
+            font-size: ${theme.typography.bodySmall.fontSize};
             line-height: 30px;
             margin: 0 6px;
             position: absolute;
-            text-shadow: -1px -1px 0 ${colors.pageBG}, 1px -1px 0 ${colors.pageBG}, -1px 1px 0 ${colors.pageBG}, 1px 1px 0 ${colors.pageBG};
+            text-shadow: 0 0 3px ${colors.pageBG}, 0 0 3px ${colors.pageBG}, 0 0 3px ${colors.pageBG};
             white-space: nowrap
         }
 
@@ -157,12 +160,12 @@ export const adjustCubismCrossHair = (context: cubism.Context, hoverEventData: D
 
 
 export const D3Graph: React.FC<{
-  height: number;
   width: number;
   data: PanelData;
   options: CubismOptions;
   eventBus: EventBus;
-}> = ({ data, options, eventBus }) => {
+  onChangeTimeRange: (range: AbsoluteTimeRange) => void;
+}> = ({ width, data, options, eventBus, onChangeTimeRange }) => {
   // cubism.context() allocates scales/listeners; create once per component lifetime,
   // not on every render. All renders reuse contextRef.current.
   const contextRef = useRef<cubism.Context | null>(null);
@@ -193,7 +196,7 @@ export const D3Graph: React.FC<{
     const doRender = () => {
       lastRenderRef.current = Date.now();
       if (renderD3Ref.current) {
-        D3GraphRender(context, data, options, styles, eventBus)(renderD3Ref.current);
+        D3GraphRender(context, data, options, styles, eventBus, onChangeTimeRange)(renderD3Ref.current);
       }
     };
 
@@ -210,7 +213,7 @@ export const D3Graph: React.FC<{
         clearTimeout(renderTimerRef.current);
       }
     };
-  }, [context, data, options, styles, eventBus]);
+  }, [context, data, options, styles, eventBus, onChangeTimeRange, width]);
 
   useEffect(() => {
     const sub = eventBus.getStream(DataHoverEvent).subscribe((data: DataHoverEvent) => {
@@ -226,8 +229,8 @@ export const D3Graph: React.FC<{
 }
 
 
-export const CubismPanel: React.FC<Props> = ({ options, data, width, height, eventBus }) => {
+export const CubismPanel: React.FC<Props> = ({ options, data, width, eventBus, onChangeTimeRange }) => {
   return (
-      <D3Graph height={height} width={width} data={data} options={options} eventBus={eventBus}  />
+      <D3Graph width={width} data={data} options={options} eventBus={eventBus} onChangeTimeRange={onChangeTimeRange} />
   );
 };
