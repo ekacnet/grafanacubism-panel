@@ -2,7 +2,7 @@ import { CubismOptions } from 'types';
 import * as cubism from 'cubism-ng';
 import * as d3 from 'd3';
 
-import { DataHoverEvent, EventBus, PanelData, DataFrame, textUtil } from '@grafana/data';
+import { AbsoluteTimeRange, DataHoverEvent, EventBus, PanelData, DataFrame, textUtil } from '@grafana/data';
 import { getSerieByName, convertAllDataToCubism } from '../cubism_utils';
 import { log_debug } from '../misc_utils';
 import { calculateSecondOffset } from '../date_utils';
@@ -19,6 +19,7 @@ export const D3GraphRender = (
   options: CubismOptions,
   styles: CSSStyles,
   eventBus: EventBus,
+  onChangeTimeRange: (range: AbsoluteTimeRange) => void,
   convertDatahelper: (d: DataFrame[], n: number[], o: any, z: number) => cubism.Metric[] = convertAllDataToCubism
 ): ((wrapperDiv: HTMLDivElement | null) => void) => {
   return (panelDiv: HTMLDivElement | null) => {
@@ -61,7 +62,7 @@ export const D3GraphRender = (
     panelDiv.innerHTML = '';
     panelDiv.className = styles['cubism-panel'];
     let cubismData = convertDatahelper(data.series, cubismTimestamps, context, step).filter(
-      (el): el is cubism.Metric => el !== null
+      (el): el is cubism.MetricValue => el !== null
     );
 
     let prev = +now;
@@ -142,10 +143,14 @@ export const D3GraphRender = (
 
     // create the rule
     const ruleDiv = canvasDiv.append('div').attr('class', `${styles['rule']}`).attr('id', 'rule');
-    const zoomDiv = canvasDiv.append('div').attr('class', 'zoom');
     context.rule().render(ruleDiv);
-    context.zoom(zoomCallbackGen(context, data, options)).render(zoomDiv);
-    context.zoom().setZoomType('onelane');
+    if (options.zoomBehavior === 'off') {
+      context.zoom().disable();
+    } else {
+      const zoomDiv = canvasDiv.append('div').attr('class', 'zoom');
+      context.zoom(zoomCallbackGen(context, data, options, onChangeTimeRange)).render(zoomDiv);
+      context.zoom().setZoomType('onelane');
+    }
 
     // extent is the vertical range for the values for a given horinzon
     if (options.automaticExtents || options.extentMin === undefined || options.extentMax === undefined) {
@@ -158,11 +163,10 @@ export const D3GraphRender = (
       if (i === null) {
         canvasDiv.selectAll('.value').style('right', null);
       } else {
-        let val = context._scale.invert(i);
         eventBus.publish(
           new DataHoverEvent({
             point: {
-              time: val,
+              time: +context._scale.invert(i),
             },
           })
         );
@@ -199,11 +203,26 @@ function isString(value: unknown): asserts value is string {
 export const zoomCallbackGen = (
   context: cubism.Context,
   data: PanelData,
-  options: CubismOptions
+  options: CubismOptions,
+  onChangeTimeRange?: (range: AbsoluteTimeRange) => void
 ): cubism.zoomCallback => {
   const f = (start: number, end: number, selection: cubism.d3Selection) => {
-    if (options.links.length === 0) {
-      log_debug("Can't do any zoom, there is no links to zoom to");
+    const behavior = options.zoomBehavior ?? 'datalink';
+    if (behavior === 'off') {
+      return;
+    }
+    if (behavior === 'timerange') {
+      if (onChangeTimeRange) {
+        const from = +context._scale.invert(start);
+        const to = +context._scale.invert(end);
+        log_debug(`In-place zoom from ${from} to ${to}`);
+        onChangeTimeRange({ from, to });
+      }
+      return;
+    }
+    // behavior === 'datalink'
+    if (!options.links?.length) {
+      log_debug("Zoom behavior is 'datalink' but no data link is configured");
       return;
     }
     log_debug(`Doing a zoom from point ${start} to point ${end}`);

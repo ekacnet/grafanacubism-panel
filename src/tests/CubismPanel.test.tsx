@@ -31,6 +31,7 @@ const makeOptions = (text = ''): CubismOptions => ({
   extentMax: 10,
   automaticExtents: true,
   links: [],
+  zoomBehavior: 'datalink' as const,
 });
 
 const makeEmptyData = (): PanelData => {
@@ -67,11 +68,11 @@ describe('D3Graph — cubism.context() stability', () => {
 
     const { rerender } = render(
       <D3Graph
-        height={100}
+        
         width={200}
         data={data}
         options={makeOptions()}
-        eventBus={eventBus}
+        eventBus={eventBus} onChangeTimeRange={jest.fn()}
       />
     );
 
@@ -83,11 +84,11 @@ describe('D3Graph — cubism.context() stability', () => {
     for (let i = 0; i < 5; i++) {
       rerender(
         <D3Graph
-          height={100 + i}
+          
           width={200 + i}
           data={data}
           options={makeOptions()}
-          eventBus={eventBus}
+          eventBus={eventBus} onChangeTimeRange={jest.fn()}
         />
       );
     }
@@ -101,11 +102,11 @@ describe('D3Graph — cubism.context() stability', () => {
 
     const { unmount } = render(
       <D3Graph
-        height={100}
+        
         width={200}
         data={data}
         options={makeOptions()}
-        eventBus={eventBus}
+        eventBus={eventBus} onChangeTimeRange={jest.fn()}
       />
     );
     expect(contextSpy.mock.calls.length).toBe(1);
@@ -115,11 +116,11 @@ describe('D3Graph — cubism.context() stability', () => {
     // Mount a fresh instance — should get a new context.
     render(
       <D3Graph
-        height={100}
+        
         width={200}
         data={data}
         options={makeOptions()}
-        eventBus={eventBus}
+        eventBus={eventBus} onChangeTimeRange={jest.fn()}
       />
     );
     expect(contextSpy.mock.calls.length).toBe(2);
@@ -133,33 +134,33 @@ describe('D3Graph — cubism.context() stability', () => {
 
     const { rerender } = render(
       <D3Graph
-        height={100}
+        
         width={200}
         data={data}
         options={makeOptions('')}
-        eventBus={eventBus}
+        eventBus={eventBus} onChangeTimeRange={jest.fn()}
       />
     );
     expect(contextSpy.mock.calls.length).toBe(1);
 
     rerender(
       <D3Graph
-        height={100}
+        
         width={200}
         data={data}
         options={makeOptions('hello')}
-        eventBus={eventBus}
+        eventBus={eventBus} onChangeTimeRange={jest.fn()}
       />
     );
     expect(contextSpy.mock.calls.length).toBe(1);
 
     rerender(
       <D3Graph
-        height={100}
+        
         width={200}
         data={data}
         options={makeOptions('')}
-        eventBus={eventBus}
+        eventBus={eventBus} onChangeTimeRange={jest.fn()}
       />
     );
     expect(contextSpy.mock.calls.length).toBe(1);
