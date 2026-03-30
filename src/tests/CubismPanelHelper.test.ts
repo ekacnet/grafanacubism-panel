@@ -107,6 +107,7 @@ const createMockOptions = (url?: string): CubismOptions => {
     extentMin: 0,
     extentMax: 10,
     automaticExtents: true,
+    zoomBehavior: 'datalink' as const,
   };
 };
 
@@ -206,6 +207,7 @@ describe('D3GraphRender', () => {
       mockOptions,
       mockStyles,
       mockEventBus,
+      jest.fn(),
       convertAllDataToCubism
     );
     expect(renderFn(null)).toBeUndefined();
@@ -218,6 +220,7 @@ describe('D3GraphRender', () => {
       mockOptions,
       mockStyles,
       mockEventBus,
+      jest.fn(),
       convertAllDataToCubism
     );
     expect(renderFn(mockPanelDiv)).toBeUndefined();
@@ -226,7 +229,7 @@ describe('D3GraphRender', () => {
     let data = getData(86400);
     data.series[0].length = 0;
     const mockHelper = jest.fn(() => [null]);
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), mockHelper);
     renderFn(mockPanelDiv);
 
     const calls = mockHelper.mock.calls as unknown[][];
@@ -246,7 +249,7 @@ describe('D3GraphRender', () => {
     let data = getData(86400);
     data.series[0].length = 0;
     const mockHelper = jest.fn(() => []);
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), mockHelper);
     renderFn(mockPanelDiv);
 
     const calls = mockHelper.mock.calls as unknown[][];
@@ -268,7 +271,7 @@ describe('D3GraphRender', () => {
     const mockHelper = jest.fn(() => []);
     mockOptions.automaticSampling = false;
     mockOptions.sampleType = false;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), mockHelper);
     renderFn(mockPanelDiv);
 
     const calls = mockHelper.mock.calls as unknown[][];
@@ -290,7 +293,7 @@ describe('D3GraphRender', () => {
     const mockHelper = jest.fn(() => []);
     mockOptions.automaticSampling = false;
     mockOptions.sampleType = true;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, mockHelper);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), mockHelper);
     renderFn(mockPanelDiv);
 
     const calls = mockHelper.mock.calls as unknown[][];
@@ -311,7 +314,7 @@ describe('D3GraphRender', () => {
     data.series = [getValidSerie(width, 1, 86400)];
     mockOptions.automaticSampling = false;
     mockOptions.sampleType = false;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
     // Create a spy on the function
 
     renderFn(mockPanelDiv);
@@ -329,7 +332,7 @@ describe('D3GraphRender', () => {
     const data = getData(86400);
     data.series = [getValidSerie(width, 1, 86400)];
     mockOptions.automaticExtents = true;
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -345,7 +348,7 @@ describe('D3GraphRender', () => {
   it('should render graph and text when panelDiv and data are valid', () => {
     const data = getData(86400);
     data.series = [getValidSerie(width, 1, 86400)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -362,7 +365,7 @@ describe('D3GraphRender', () => {
     let time = 14 * 86400;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -378,7 +381,7 @@ describe('D3GraphRender', () => {
     let time = 14 * 86400 - 1;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -394,7 +397,7 @@ describe('D3GraphRender', () => {
     let time = 86400 / 2 - 1;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -410,7 +413,7 @@ describe('D3GraphRender', () => {
     let time = 86400 - 1;
     const data = getData(time);
     data.series = [getValidSerie(width, 1, time)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -425,7 +428,7 @@ describe('D3GraphRender', () => {
   it('should render graph and text when panelDiv and data are valid and called for an hour ', () => {
     const data = getData(3500);
     data.series = [getValidSerie(width, 1, 3500)];
-    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, convertAllDataToCubism);
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
     expect(mockPanelDiv.innerHTML).not.toBe('');
@@ -494,7 +497,7 @@ describe('focusCallback', () => {
     let data = getData(3500);
     data.series = [getValidSerie(width, 1, 3500)];
     mockEventBus.publish();
-    const renderFn = D3GraphRender(context, data, mockOptions, mockStyles, mockEventBus);
+    const renderFn = D3GraphRender(context, data, mockOptions, mockStyles, mockEventBus, jest.fn());
 
     // @ts-ignore
     renderFn(mockPanelDiv);
@@ -504,7 +507,7 @@ describe('focusCallback', () => {
     expect(mockEventBus.publish).toHaveBeenCalledWith({
       origin: undefined,
       payload: {
-        point: { time: new Date('2020-09-01T00:18:11.283Z') },
+        point: { time: new Date('2020-09-01T00:18:11.283Z').getTime() },
       },
       type: 'data-hover',
     });
@@ -557,7 +560,7 @@ describe('zoomCallbackGen', () => {
     console.log = jest.fn();
 
     zoomCallback(0, 100, getSelection());
-    expect(console.log).toHaveBeenCalledWith("Can't do any zoom, there is no links to zoom to");
+    expect(console.log).toHaveBeenCalledWith("Zoom behavior is 'datalink' but no data link is configured");
     console.log = oldFunc;
   });
   it('should open a link in a new tab if targetBlank is true', () => {
@@ -618,5 +621,48 @@ describe('zoomCallbackGen', () => {
 
     mockSelection.select = jest.fn().mockReturnValueOnce({ text: jest.fn().mockReturnValue('grafana') });
     expect(() => zoomCallback(0, 100, mockSelection)).toThrow();
+  });
+  it("should call onChangeTimeRange when zoomBehavior is 'timerange'", () => {
+    options = createMockOptions();
+    options.zoomBehavior = 'timerange';
+    const onChangeTimeRange = jest.fn();
+    context._scale.invert = jest.fn((px: number) => new Date(1700000000000 + px * 1000));
+
+    const zoomCallback = zoomCallbackGen(context, data, options, onChangeTimeRange);
+    zoomCallback(10, 50, getSelection());
+
+    expect(onChangeTimeRange).toHaveBeenCalledWith({
+      from: 1700000010000,
+      to: 1700000050000,
+    });
+  });
+  it("should not navigate or change time range when zoomBehavior is 'off'", () => {
+    options = createMockOptions('http://example.com');
+    options.zoomBehavior = 'off';
+    const onChangeTimeRange = jest.fn();
+    const oldOpen = global.window.open;
+    global.window.open = jest.fn();
+
+    const zoomCallback = zoomCallbackGen(context, data, options, onChangeTimeRange);
+    zoomCallback(10, 50, getSelection());
+
+    expect(onChangeTimeRange).not.toHaveBeenCalled();
+    expect(global.window.open).not.toHaveBeenCalled();
+    global.window.open = oldOpen;
+  });
+  it("should ignore data links when zoomBehavior is 'timerange'", () => {
+    options = createMockOptions('http://example.com');
+    options.zoomBehavior = 'timerange';
+    const onChangeTimeRange = jest.fn();
+    context._scale.invert = jest.fn((px: number) => new Date(px));
+    const oldOpen = global.window.open;
+    global.window.open = jest.fn();
+
+    const zoomCallback = zoomCallbackGen(context, data, options, onChangeTimeRange);
+    zoomCallback(0, 100, getSelection());
+
+    expect(onChangeTimeRange).toHaveBeenCalled();
+    expect(global.window.open).not.toHaveBeenCalled();
+    global.window.open = oldOpen;
   });
 });
