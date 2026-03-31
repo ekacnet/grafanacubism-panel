@@ -98,6 +98,8 @@
   "overrides": {
     "@cypress/request": "3.0.10",
     "form-data": "4.0.5",
-    "underscore": "1.13.8"
+    "underscore": "1.13.8",
+    "immutable": "^5.1.5",
+    "dompurify": "^3.3.2"
   }
 }
