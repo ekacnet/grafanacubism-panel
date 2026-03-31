@@ -153,10 +153,14 @@ export const D3GraphRender = (
     }
 
     // extent is the vertical range for the values for a given horinzon
+    const horizon = context.horizon();
+    if (typeof horizon.valueScale === 'function') {
+      horizon.valueScale(options.valueScale ?? 'linear');
+    }
     if (options.automaticExtents || options.extentMin === undefined || options.extentMax === undefined) {
-      context.horizon().render(h);
+      horizon.render(h);
     } else {
-      context.horizon().extent([options.extentMin, options.extentMax]).render(h);
+      horizon.extent([options.extentMin, options.extentMax]).render(h);
     }
 
     context.on('focus', function (i: number) {

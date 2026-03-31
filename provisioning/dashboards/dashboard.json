@@ -92,6 +92,43 @@
       ],
       "title": "Panel Title 2",
       "type": "ekacnet-cubismgrafana-panel"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "a0ce46a5-c7f8-4cec-997c-6314adf138a1"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "automaticExtents": true,
+        "extentMax": 10,
+        "extentMin": -10,
+        "seriesCountSize": "sm",
+        "showSeriesCount": false,
+        "text": "some text",
+        "valueScale": "log"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "a0ce46a5-c7f8-4cec-997c-6314adf138a1"
+          },
+          "max": 10000,
+          "min": 1,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 10
+        }
+      ],
+      "title": "Log Scale Demo",
+      "type": "ekacnet-cubismgrafana-panel"
     }
   ],
   "refresh": "",

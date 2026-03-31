@@ -107,6 +107,7 @@ const createMockOptions = (url?: string): CubismOptions => {
     extentMin: 0,
     extentMax: 10,
     automaticExtents: true,
+    valueScale: 'linear',
     zoomBehavior: 'datalink' as const,
   };
 };
@@ -120,6 +121,7 @@ describe('D3GraphRender', () => {
   let mockPanelDiv: HTMLDivElement;
   let mockTicks: any;
   let mockExtent: any;
+  let mockValueScale: any;
   let mockEventBus: any;
   const oldConsole = console.log;
 
@@ -131,6 +133,9 @@ describe('D3GraphRender', () => {
       return mockContext.axis();
     });
     mockExtent = jest.fn(() => {
+      return mockContext.horizon();
+    });
+    mockValueScale = jest.fn(() => {
       return mockContext.horizon();
     });
     mockContext = {
@@ -151,6 +156,7 @@ describe('D3GraphRender', () => {
       horizon: jest.fn(() => ({
         render: jest.fn(),
         extent: mockExtent,
+        valueScale: mockValueScale,
       })),
       rule: jest.fn(() => ({ render: jest.fn() })),
       zoom: jest.fn(() => ({
@@ -360,6 +366,15 @@ describe('D3GraphRender', () => {
     expect(mockContext.horizon).toHaveBeenCalled();
     expect(mockContext.rule).toHaveBeenCalled();
     expect(mockContext.zoom).toHaveBeenCalled();
+  });
+  it('should apply log value scale when selected', () => {
+    const data = getData(86400);
+    data.series = [getValidSerie(width, 1, 86400)];
+    mockOptions.valueScale = 'log';
+    const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
+    renderFn(mockPanelDiv);
+
+    expect(mockValueScale).toHaveBeenCalledWith('log');
   });
   it('should render graph and text when panelDiv and data are valid for more than a 14 day', () => {
     let time = 14 * 86400;

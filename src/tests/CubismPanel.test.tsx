@@ -30,6 +30,7 @@ const makeOptions = (text = ''): CubismOptions => ({
   extentMin: -10,
   extentMax: 10,
   automaticExtents: true,
+  valueScale: 'linear',
   links: [],
   zoomBehavior: 'datalink' as const,
 });
