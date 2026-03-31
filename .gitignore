@@ -38,3 +38,6 @@ playwright/.auth/
 .eslintcache
 ekacnet-cubismgrafana-panel.zip
 ekacnet-cubismgrafana-panel
+
+# stacky
+.stacky
