@@ -33,6 +33,18 @@ export const plugin = new PanelPlugin<CubismOptions>(CubismPanel).setPanelOption
       name: 'Calculate extent automatically',
       defaultValue: true,
     })
+    .addRadio({
+      path: 'valueScale',
+      name: 'Value scale',
+      description: 'Scale used for the metric values in each horizon lane.',
+      defaultValue: 'linear',
+      settings: {
+        options: [
+          { value: 'linear', label: 'Linear' },
+          { value: 'log', label: 'Logarithmic' },
+        ],
+      },
+    })
     .addNumberInput({
       path: 'extentMax',
       name: 'Extent max',
