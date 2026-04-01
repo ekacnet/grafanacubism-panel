@@ -34,14 +34,18 @@ export const plugin = new PanelPlugin<CubismOptions>(CubismPanel).setPanelOption
       defaultValue: true,
     })
     .addRadio({
-      path: 'valueScale',
-      name: 'Value scale',
-      description: 'Scale used for the metric values in each horizon lane.',
-      defaultValue: 'linear',
+      path: 'color',
+      name: 'Color',
+      description: 'Color family used for the horizon bands.',
+      defaultValue: 'green',
       settings: {
         options: [
-          { value: 'linear', label: 'Linear' },
-          { value: 'log', label: 'Logarithmic' },
+          { value: 'green', label: 'Green' },
+          { value: 'blue', label: 'Blue' },
+          { value: 'purple', label: 'Purple' },
+          { value: 'yellow', label: 'Yellow' },
+          { value: 'orange', label: 'Orange' },
+          { value: 'red', label: 'Red' },
         ],
       },
     })

@@ -107,7 +107,6 @@ const createMockOptions = (url?: string): CubismOptions => {
     extentMin: 0,
     extentMax: 10,
     automaticExtents: true,
-    valueScale: 'linear',
     zoomBehavior: 'datalink' as const,
   };
 };
@@ -121,7 +120,7 @@ describe('D3GraphRender', () => {
   let mockPanelDiv: HTMLDivElement;
   let mockTicks: any;
   let mockExtent: any;
-  let mockValueScale: any;
+  let mockColors: any;
   let mockEventBus: any;
   const oldConsole = console.log;
 
@@ -135,7 +134,7 @@ describe('D3GraphRender', () => {
     mockExtent = jest.fn(() => {
       return mockContext.horizon();
     });
-    mockValueScale = jest.fn(() => {
+    mockColors = jest.fn(() => {
       return mockContext.horizon();
     });
     mockContext = {
@@ -156,7 +155,7 @@ describe('D3GraphRender', () => {
       horizon: jest.fn(() => ({
         render: jest.fn(),
         extent: mockExtent,
-        valueScale: mockValueScale,
+        colors: mockColors,
       })),
       rule: jest.fn(() => ({ render: jest.fn() })),
       zoom: jest.fn(() => ({
@@ -367,14 +366,25 @@ describe('D3GraphRender', () => {
     expect(mockContext.rule).toHaveBeenCalled();
     expect(mockContext.zoom).toHaveBeenCalled();
   });
-  it('should apply log value scale when selected', () => {
+  it('should apply selected horizon color palette', () => {
     const data = getData(86400);
     data.series = [getValidSerie(width, 1, 86400)];
-    mockOptions.valueScale = 'log';
+    mockOptions.color = 'purple';
     const renderFn = D3GraphRender(mockContext, data, mockOptions, mockStyles, mockEventBus, jest.fn(), convertAllDataToCubism);
     renderFn(mockPanelDiv);
 
-    expect(mockValueScale).toHaveBeenCalledWith('log');
+    expect(mockColors).toHaveBeenCalledWith([
+      '#705da0',
+      '#8f65d8',
+      '#a37ff2',
+      '#c7b1f9',
+      '#e0d1ff',
+      '#e0d1ff',
+      '#c7b1f9',
+      '#a37ff2',
+      '#8f65d8',
+      '#705da0',
+    ]);
   });
   it('should render graph and text when panelDiv and data are valid for more than a 14 day', () => {
     let time = 14 * 86400;

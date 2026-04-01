@@ -24,8 +24,7 @@
     "server": "docker-compose up --build",
     "sign": "npx --yes @grafana/sign-plugin@latest",
     "pretty": "prettier --single-quote  --write \"{src,__{tests,demo,dist}__}/**/*.ts*\"",
-    "fix:cubism-link": "mkdir -p node_modules && ln -sfn ../3rdparty/cubism-ng node_modules/cubism-ng",
-    "prepare": "relative-deps && npm run fix:cubism-link"
+    "prepare": "relative-deps"
   },
   "nyc": {
     "report-dir": "coverage/cypress"
