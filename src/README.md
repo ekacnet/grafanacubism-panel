@@ -35,6 +35,9 @@ Extents (maximum and minimum) correspond to the highest (respectively lowest) va
 By default cubism figures out the highest (resp. lowest) value in each serie if this setting is enabled.
 Disabling it allows you to set mininum value of the extent and the maximum one, those settings are accross all the series in the graph. Obviously any value that is above the maximum extent will still be represented in the darkest color, for instance setting the maximum to 100 will create 5 bands (0-20, 21-40, 41-60, 61-80, 81-100) and so a value of 200 would have the same color than 81 or 99.
 
+### Color
+Choose the color family used to render the horizon bands. The panel supports Grafana-like families: green, blue, purple, yellow, orange, and red.
+
 ### Bottom label
 Allows you to display a text at the bottom of the graph. This is your moment to be creative !
 
