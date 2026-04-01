@@ -21,4 +21,5 @@ jobs:
       - uses: grafana/plugin-actions/build-plugin@release
         # (For more info on how to generate the access policy token see https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin#generate-an-access-policy-token)
         with:
+          node-version: "23"
           policy_token: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
