@@ -1,4 +1,4 @@
-import { CubismOptions } from 'types';
+import { CubismOptions, HorizonColor } from 'types';
 import * as cubism from 'cubism-ng';
 import * as d3 from 'd3';
 
@@ -12,6 +12,20 @@ type CSS = string;
 interface CSSStyles {
   [key: string]: CSS;
 }
+
+const HORIZON_SHADES: Record<HorizonColor, string[]> = {
+  green: ['#cee9cc', '#a4d99b', '#73bf69', '#56a64b', '#37872d'],
+  blue: ['#d2e3fc', '#a4c8f5', '#5794f2', '#3274d9', '#1f60c4'],
+  purple: ['#e0d1ff', '#c7b1f9', '#a37ff2', '#8f65d8', '#705da0'],
+  yellow: ['#fff2bf', '#ffe08a', '#e0b400', '#c99500', '#a77d00'],
+  orange: ['#ffd9bf', '#ffbb85', '#ff9830', '#fa6400', '#c84f00'],
+  red: ['#ffd1d8', '#f7a1b2', '#f2495c', '#e02f44', '#b92139'],
+};
+
+export const getHorizonColors = (color: HorizonColor | undefined): string[] => {
+  const shades = HORIZON_SHADES[color ?? 'green'];
+  return [...shades].reverse().concat(shades);
+};
 
 export const D3GraphRender = (
   context: cubism.Context,
@@ -152,11 +166,9 @@ export const D3GraphRender = (
       context.zoom().setZoomType('onelane');
     }
 
-    // extent is the vertical range for the values for a given horinzon
-    const horizon = context.horizon();
-    if (typeof horizon.valueScale === 'function') {
-      horizon.valueScale(options.valueScale ?? 'linear');
-    }
+    const horizon = context.horizon().colors(getHorizonColors(options.color));
+
+    // extent is the vertical range for the values for a given horizon
     if (options.automaticExtents || options.extentMin === undefined || options.extentMax === undefined) {
       horizon.render(h);
     } else {
