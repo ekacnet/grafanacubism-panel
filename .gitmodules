@@ -1,4 +1,0 @@
-[submodule "3rdparty/cubism-ng"]
-	path = 3rdparty/cubism-ng
-	url = https://github.com/ekacnet/cubism-es.git
-	branch = main

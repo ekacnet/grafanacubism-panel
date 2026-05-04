@@ -25,14 +25,15 @@ exports = {
   coverageDirectory: 'coverage/jest',
   moduleNameMapper: {
     ...(baseConfig.moduleNameMapper || {}),
-    '^cubism-ng$': path.resolve(__dirname, '3rdparty', 'cubism-ng', 'dist', 'cubism-ng.esm.js'),
+    '^cubism-ng$': path.resolve(__dirname, 'node_modules', 'cubism-ng', 'dist', 'cubism-ng.esm.js'),
   },
+  modulePathIgnorePatterns: [...(baseConfig.modulePathIgnorePatterns || []), '<rootDir>/.stacky/'],
+  testPathIgnorePatterns: [...(baseConfig.testPathIgnorePatterns || []), '<rootDir>/.stacky/'],
   transformIgnorePatterns: ignoredModules,
 };
 
 exports.coveragePathIgnorePatterns = [
   '.config/jest-setup.js',
-  '3rdparty/cubism-ng/dist/cubism-ng.esm.js',
   '.config/jest/mocks',
 ];
 module.exports = exports;
