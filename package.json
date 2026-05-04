@@ -1,6 +1,6 @@
 {
   "name": "cubism-grafana-panel",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A panel to display cubism like graph in grafana",
   "scripts": {
     "prebuild": "npm run build:cubism-ng",
@@ -96,12 +96,13 @@
     "cubism-ng": "3rdparty/cubism-ng/"
   },
   "overrides": {
-    "@cypress/request": "3.0.10",
+    "@cypress/request": "4.0.0",
     "form-data": "4.0.5",
     "underscore": "1.13.8",
     "immutable": "5.1.5",
     "serialize-javascript": "7.0.5",
     "dompurify": "^3.3.2",
-    "lodash": "4.18.1"
+    "lodash": "4.18.1",
+    "uuid": "14.0.0"
   }
 }
