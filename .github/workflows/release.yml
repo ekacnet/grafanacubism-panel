@@ -25,3 +25,4 @@ jobs:
         with:
           node-version: "23"
           policy_token: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
+          attestation: true
