@@ -15,4 +15,8 @@ Add support for debounce rendering, rename cubism-es to ([cubism-ng](https://git
 
 ## 0.1.3
 
-Fix security vulnerability thanks to  Jari Takkal for reporting and fixing
+Fix security vulnerability thanks to  Jari Takkala for reporting and fixing
+
+## 0.1.6
+
+Fix typos and things to make packaging works
